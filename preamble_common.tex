@@ -1,0 +1,24 @@
+\setlength{\marginparwidth}{1in}
+
+\usepackage{cite}
+\usepackage[bookmarks]{hyperref}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{url}
+
+\newenvironment{packed_enum}{
+\begin{enumerate}
+  \setlength{\itemsep}{1pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}{\end{enumerate}}
+
+
+\newcommand{\htmlonly}[1]{}
+\newcommand{\pdfonly}[1]{}
+
+
+\title{GPU RRT$^*$\\ \small Working Document}
+\author{Josh Bialkowski \\ \small jbialk@mit.edu}
+
