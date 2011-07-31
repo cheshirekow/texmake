@@ -20,7 +20,7 @@ HTML_TEX    :=  $(COMMON_TEX) \
                 
 BIB         :=  
 
-CLEAN_EXT   :=  aux txt log css cache bbl blg lof lot out toc xml html xhtml pdf
+CLEAN_EXT   :=  aux txt log cache bbl blg lof lot out toc xml html xhtml pdf
 
 # these variables are the dependencies for the outputs
 PDF_SRC     := $(PDF_TEX) $(BIB)

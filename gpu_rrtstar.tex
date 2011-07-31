@@ -39,18 +39,19 @@ Consider figure \ref{fig:nonempty}. If we generate a sample in bin (2,4), then w
 
 When all bins contain at least one node, then the nearest node to a sample will be in the bin where the sample was generated, or any of the eight other bins around it. We can assign separate threads to search each of the trees, storing all the results in shared memory, and then running a reduction on it. 
 
-\subsection{Index Idea}
+\subsection{Prior to full bins}
+
+\subsubsection{Index Idea}
 
 Here is an idea. For each bin, store an integer corresponding to the unilateral distance (measured in number of bins on the longest edge) to the nearest non-empty bin. For bin (4,4) in figure \ref{fig:nonempty} that distance will be 2. Initially, each bin will store the distance from itself to the farthest edge of the workspace. After each successful nearest node search, it updates that distance by updating the distance to the bin where the nearest node was found. The idea is that the nearest node in all bins outside that radius will be, by definition, further away than the node that was just found. 
 
-\subsection{Enumerating non-empty bins}
+\subsubsection{Enumerating non-empty bins}
 
-The next step of the algorithm may be to enumerate non-empty bins. We can do this by assigning one thread per bin within the perimeter defined by the above index. For a given sample, if the stored index is $d$, then this will require at most $d^2$ threads. Each of these threads will simply check whether their bin is non-empty. They store the result of this check in shared memory, and then we
-perform a reduction to write an array of non-empty bin indices which we should check. The reduction should start at the center, and abort early on the first perimeter containing
+To enumerate non-empty bins, we can assign one thread per bin within the perimeter defined by the above index. For a given sample, if the stored index is $d$, then this will require at most $d^2$ threads. Each of these threads will simply check whether their bin is non-empty. They store the result of this check in shared memory, and then we perform a reduction to write an array of non-empty bin indices which we should check. The reduction should start at the center, and abort early on the first perimeter containing
  a non-empty bin.
 
 
-\subsection{Quadrants}
+\subsubsection{Quadrants}
 
 Once all bins are occupied by at least one node, we can quickly narrow down the search to only four bins. Consider the following figure.
 
@@ -72,13 +73,15 @@ For a sample generated in bin (2,2), in the south-east quadrant, then, assuminb 
 
 This is a simple way to narrow down the search, but I'm not sure it will really offer us a gain in runtime. If it does, we can either store four separate kd-trees per bin, or we can add an additional index to the kd-tree which stores the root element of the smallest (hyper-) rectangle (subtree) that fully contains the quadrant.
 
+Nevermind, this is dumb. Rename ``quadrant'' as ``bin'', and all we're advocating here is quadroupling the number of bins.
+
 
 
 
 
 \section{Steering}
 
-For simple steering functions (i.e. for a single integrator) or for functions which cannot be parallelized, in calculating the path from one node to another, the thread who created the sample will be the one who calculates the trajectory. For functions which may be parallelized (i.e. trajectory optimization) we may actually want to serialize over samples, and parallelize the steering of an individual node pair.
+For simple steering functions (i.e. for a single integrator) or for functions which cannot be parallelized, in calculating the path from one node to another, the thread who created the sample will be the one who calculates the trajectory. For functions which may be parallelized (i.e. trajectory optimization) we may actually want to serialize over samples, and parallelize the steering of an individual node pair. 
 
 \section{Collision Checking (Single Paths)}
 
@@ -96,6 +99,13 @@ Collision checking may likewise be done in series or parallel. Series has the be
 How should we store the child node lists? Does the scheduling of the algorithm yield a reasonable (soft) maximum number of child nodes? If it does, can we enforce such a maximum and still guarentee optimality? What do we do if a desired parent is already saturated, do we find another parent, or do we just drop the node?
 
 Will we hit a huge performance penalty if the child node lists are stored as linked lists? Can we marginalize this penalty by creating a linked list where some $n$ successive entries in that list are stored successively in memory?
+
+\begin{figure}[h]
+\begin{centering}
+    \includegraphics[scale=1]{\figfile{fig/child_list}}
+    \caption{Linked-list of arrays}
+\end{centering} 
+\end{figure}
 
 \subsection{Synchronization}
 
