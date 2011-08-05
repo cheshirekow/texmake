@@ -205,7 +205,7 @@ If we store the results of the near-node search as a huge collection of linked l
 We can make an accessory output of the near node search kernel, or the collision checking kernel, to be the number of nodes returned (the number of potential children, for each retained sample). 
 
 Since the race condition on parenting will actually result in throwing out evaluated connections, we can treat this as a reduction as well. It essentially ammounts to finding all rewirings that end at node $i$, and then picking the one that is best. This can be done by sorting the end points of all the remaining near node searches (a reduction sort), and then reducing all repetitions (a min reduction). 
-
+ 
 \begin{figure}[H]
 \begin{centering}
     \includegraphics[scale=1]{\figfile{fig/kernel_near_rotate}}
@@ -213,6 +213,7 @@ Since the race condition on parenting will actually result in throwing out evalu
 \end{centering} 
 \end{figure}
 
+Merge sort should be easy to parallelize. After the nodes are sorted then we can run a second kernel to generate start points and lengths for each array. Each thread can look at a pair of elements and see if they have different parents. If they do, it marks an end/start of an array. Then we can run a reduction on the output of that kernel to get a simple array of start addresses and end adddresses. 
 
 After this, all potential race conditions on reparenting the potential child will be resolved. Then we can perform another reduction sort to put the search results back in parent ordering. Then we can assign one thread per parent to write the children to the child list, using the same synchronized allocator as before. 
  
@@ -225,7 +226,7 @@ After this, all potential race conditions on reparenting the potential child wil
 
 
 \section{Cost propogation}
-If the result of all reparenting operations is performed as above, the result of the child race-resolution kernel can be reused as the initial data set for the cost propogation kernel. Again, we can use the linked list marginalization strategy to batch up nodes that need updating. Each kernel that touches a node creates a list of children that now need to be updated. Once that list is big enough, it writes that list to global memory, and asks the allocator for a new block. 
+If the result of all reparenting operations is performed as above, the result of the child race-resolution kernel can be reused as the initial data set for the cost propogation kernel. Again, we can use the linked list marginalization strategy to batch up nodes that need updating. Each kernel that touches a node adds to it's list of children that now need to be updated. If that list gets too big, it writes the excess to global memory, and asks the allocator for a new block to write it's next excess. If it ever expires its list, it asks the allocator for a new read-block.
 
 
 
