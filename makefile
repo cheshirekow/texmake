@@ -1,3 +1,7 @@
+SVG2PDF := "/home/josh/Codes/c/svg2pdf/gitclone/svg2pdf"
+SVG2EPS := "/home/josh/Codes/c/svg2pdf/gitclone/svg2eps"
+MAKEDEP := "./makedep.pl"
+
 gpu_rrtstar.pdf.d   : gpu_rrtstar_pdf.tex 
 gpu_rrtstar.xhtml.d : gpu_rrtstar_html.tex
 gpu_rrtstar.dvi.d   : gpu_rrtstar_pdf.tex
@@ -8,13 +12,14 @@ include gpu_rrtstar.dvi.d
 
 
 
-CLEAN_EXT   :=  aux txt log cache bbl blg lof lot out toc xml html xhtml pdf d
+CLEAN_EXT   :=  aux txt log cache bbl blg lof lot out toc xml html xhtml pdf d dvi png gz
+CLEAN_IMG   :=  png pdf eps
 
 # these variables are the dependencies for the outputs
 PDF_SRC     := $(PDF_TEX) $(BIB)
 HTML_SRC    := $(HTML_TEX) $(BIB)
 
-CLEAN_CMD   := $(addprefix *.,$(CLEAN_EXT))
+CLEAN_CMD   := $(addprefix *.,$(CLEAN_EXT)) $(addprefix fig/*.,$(CLEAN_IMG))
 
 # the 'all' target will make both the pdf and html outputs
 all: $(addprefix gpu_rrtstar, .dvi .pdf .xhtml)
@@ -24,16 +29,16 @@ all: $(addprefix gpu_rrtstar, .dvi .pdf .xhtml)
 
 
 %.d : 
-	./makedep.pl $< $*
+	$(MAKEDEP) $< $*
 
 %.eps : %.svg
-	convert $< $@
+	$(SVG2EPS) $< $@
 	
 %.png : %.svg
 	convert $< $@
 	
 %.pdf : %.svg
-	convert $< $@
+	$(SVG2PDF) $< $@
 	
 
 
@@ -106,4 +111,4 @@ all: $(addprefix gpu_rrtstar, .dvi .pdf .xhtml)
 # messages in the console when rm has nothing to remove
 clean:
 	@-rm -v $(CLEAN_CMD) 
-
+    
