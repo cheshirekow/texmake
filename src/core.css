@@ -79,6 +79,8 @@ dl.description dl.description dd { margin-left:3em; }
 .listing td.linenumber,
 .listingblock td.linenumber
    { width:3em; text-align:right;}
+div.listing{ font-family: monospace; } 
+
 /*======================================================================
  Borders and such */
 .framed  { border:1px solid black;}

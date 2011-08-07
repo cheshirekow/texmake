@@ -6,4 +6,5 @@ navbar-left.css
 *.xhtml
 *.png
 *.dvi
-
+lasthash
+git.tex

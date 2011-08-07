@@ -1,6 +1,7 @@
 SVG2PDF := /home/josh/Codes/c/svg2pdf/gitclone/svg2pdf
 SVG2EPS := /home/josh/Codes/c/svg2pdf/gitclone/svg2eps
 MAKEDEP := ./makedep.pl
+MAKEGIT := ./makegit.pl
 
 gpu_rrtstar.pdf.d   : gpu_rrtstar_pdf.tex 
 gpu_rrtstar.xhtml.d : gpu_rrtstar_html.tex
@@ -44,6 +45,7 @@ all: $(addprefix gpu_rrtstar, .dvi .pdf .xhtml)
 
 
 %.pdf : %.pdf.d
+	$(MAKEGIT)
 	@echo "Running pdflatex on $(word 2,$^)"
 	@pdflatex -interaction=nonstopmode $(basename $(word 2,$^)) > $@_0.log
 	@BIBS=$(filter *.bib, $^); \
@@ -68,6 +70,7 @@ all: $(addprefix gpu_rrtstar, .dvi .pdf .xhtml)
 
 
 %.dvi : %.dvi.d
+	$(MAKEGIT)
 	@echo "Running latex on $(word 2,$^)"
 	@latex -interaction=nonstopmode $(basename $(word 2,$^)) > $@_0.log
 	@BIBS=$(filter *.bib, $^); \
@@ -92,6 +95,7 @@ all: $(addprefix gpu_rrtstar, .dvi .pdf .xhtml)
 
 
 %.xhtml: %.xhtml.d
+	$(MAKEGIT)
 	@echo "Running latexml on $(word 2,$^)"
 	@latexml $(word 2,$^) --dest=$(basename $@).xml > $(basename $@).xml.log 2>&1
 	@BIBSTRING=""; \
