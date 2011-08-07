@@ -1,2 +1,8 @@
 .project
 .texlipse
+*.d
+*.pdf
+*.xhtml
+*.png
+*.dvi
+

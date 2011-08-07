@@ -51,7 +51,7 @@ while(<DEPEND>)
     	push(@includes, $_);
     }
     
-    if(/\.sty$/ || /\.cls$/)
+    if( (/\.sty$/ || /\.cls$/) && (!/\//) )
     {
     	$file = $_;
     	$find_done = 0;
