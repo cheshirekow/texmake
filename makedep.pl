@@ -81,19 +81,33 @@ close DEPEND;
 
 open OUTFILE, ">$output.d";
 
-print OUTFILE "$output: $rootfile $output.d \\\n";
+print OUTFILE "$output: \$(SOURCE_DIR)/$rootfile $output.d \\\n";
 
 foreach $file (@files)
 {
-	print OUTFILE "    $file \\\n";
+	if($file=~/^\//)
+    {
+        print OUTFILE "    $file \\\n";
+    }
+    else
+    {
+        print OUTFILE "    \$(SOURCE_DIR)/$file \\\n";
+    }
 }
 
 print OUTFILE "\n\n";
-print OUTFILE "$output.d: $rootfile \\\n";
+print OUTFILE "$output.d: \$(SOURCE_DIR)/$rootfile \\\n";
 
 foreach $file (@includes)
 {
-    print OUTFILE "    $file \\\n";
+	if($file=~/^\//)
+	{
+		print OUTFILE "    $file \\\n";
+	}
+	else
+	{
+        print OUTFILE "    \$(SOURCE_DIR)/$file \\\n";
+	}
 }
 
 print OUTFILE "\n\n";

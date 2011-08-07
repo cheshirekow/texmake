@@ -1,11 +1,12 @@
-SVG2PDF := "/home/josh/Codes/c/svg2pdf/gitclone/svg2pdf"
-SVG2EPS := "/home/josh/Codes/c/svg2pdf/gitclone/svg2eps"
-MAKEDEP := "./makedep.pl"
+SVG2PDF := /home/josh/Codes/c/svg2pdf/gitclone/svg2pdf
+SVG2EPS := /home/josh/Codes/c/svg2pdf/gitclone/svg2eps
+MAKEDEP := ./makedep.pl
 
 gpu_rrtstar.pdf.d   : gpu_rrtstar_pdf.tex 
 gpu_rrtstar.xhtml.d : gpu_rrtstar_html.tex
 gpu_rrtstar.dvi.d   : gpu_rrtstar_pdf.tex
 
+SOURCE_DIR := ./
 include gpu_rrtstar.pdf.d
 include gpu_rrtstar.xhtml.d
 include gpu_rrtstar.dvi.d
