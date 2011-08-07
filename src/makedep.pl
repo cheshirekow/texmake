@@ -81,7 +81,7 @@ close DEPEND;
 
 open OUTFILE, ">$output.d";
 
-print OUTFILE "$output: \$(SOURCE_DIR)/$rootfile $output.d \\\n";
+print OUTFILE "$output: $rootfile $output.d \\\n";
 
 foreach $file (@files)
 {
@@ -96,7 +96,7 @@ foreach $file (@files)
 }
 
 print OUTFILE "\n\n";
-print OUTFILE "$output.d: \$(SOURCE_DIR)/$rootfile \\\n";
+print OUTFILE "$output.d: $rootfile \\\n";
 
 foreach $file (@includes)
 {
