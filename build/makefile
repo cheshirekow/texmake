@@ -8,15 +8,15 @@ SOURCE_DIR := ../src
 # the 'all' target will make both the pdf and html outputs
 all:    dvi/gpu_rrtstar.dvi \
         pdf/gpu_rrtstar.pdf \
-        xhtml/gpu_rrtstar.xhtml
+        xhtml/index.xhtml
 
 pdf/gpu_rrtstar.pdf.d \
-xhtml/gpu_rrtstar.xhtml.d \
+xhtml/index.xhtml.d \
 dvi/gpu_rrtstar.dvi.d : $(SOURCE_DIR)/root.tex
 
 include dvi/gpu_rrtstar.dvi.d
 include pdf/gpu_rrtstar.pdf.d
-include xhtml/gpu_rrtstar.xhtml.d
+include xhtml/index.xhtml.d
 
 
 
@@ -131,5 +131,6 @@ git.tex:
 # the 2>/dev/null redirects stderr to the null device so that we don't get error
 # messages in the console when rm has nothing to remove
 clean: $(addprefix clean_,dvi pdf xhtml)
-	-rm -vf $(addsuffix /*,dvi pdf xhtml) 
+	-rm -vf $(addsuffix /*,dvi pdf xhtml)
+	-rm -vf conditionals.* bibstring.txt 
     

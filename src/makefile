@@ -5,6 +5,7 @@ MAKEGIT := ../makegit.pl
 
 gpu_rrtstar.pdf.d   : root.tex
 gpu_rrtstar.xhtml.d : root.tex
+index.xhtml.d       : root.tex
 gpu_rrtstar.dvi.d   : root.tex
 
 SOURCE_DIR := ./
