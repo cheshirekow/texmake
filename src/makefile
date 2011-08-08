@@ -3,9 +3,9 @@ SVG2EPS := /home/josh/Codes/c/svg2pdf/gitclone/svg2eps
 MAKEDEP := ./makedep.pl
 MAKEGIT := ./makegit.pl
 
-gpu_rrtstar.pdf.d   : gpu_rrtstar_pdf.tex 
-gpu_rrtstar.xhtml.d : gpu_rrtstar_html.tex
-gpu_rrtstar.dvi.d   : gpu_rrtstar_pdf.tex
+gpu_rrtstar.pdf.d   : root.tex
+gpu_rrtstar.xhtml.d : root.tex
+gpu_rrtstar.dvi.d   : root.tex
 
 SOURCE_DIR := ./
 include gpu_rrtstar.pdf.d
@@ -42,62 +42,73 @@ all: $(addprefix gpu_rrtstar, .dvi .pdf .xhtml)
 %.pdf : %.svg
 	$(SVG2PDF) $< $@
 	
-
+git.tex: 
+	$(MAKEGIT)
 
 %.pdf : %.pdf.d
-	$(MAKEGIT)
-	@echo "Running pdflatex on $(word 2,$^)"
-	@pdflatex -interaction=nonstopmode $(basename $(word 2,$^)) > $@_0.log
+	@echo "Bulding Root Document $*_pdf.tex"
+	cat conditionals.tex > $*_pdf.tex
+	echo "\pdfoutputtrue" >> $*_pdf.tex
+	echo "" >> $*_pdf.tex
+	cat $(word 2,$^) >> $*_pdf.tex
+	@echo "Running pdflatex on $*_pdf.tex"
+	@pdflatex -interaction=nonstopmode -jobname $* $*_pdf.tex > $*_pdf_0.log
 	@BIBS=$(filter *.bib, $^); \
 	if [ -n "$$BIBS" ]; then \
 		echo "bib dependencies: $$BIBS"; \
-	    echo "Running bibtex on $(basename $(word 2,$^))"; \
-	    bibtex  $(basename $(word 2,$^)) > $@_bibtex.log; \
+	    echo "Running bibtex on $*_pdf.tex"; \
+	    bibtex  $*_pdf.tex > $*_pdf_bibtex.log; \
     fi;
 	@echo "Checking for rerun suggestion"
 	@for ITER in 1 2 3 4; do \
-		STABELIZED=`cat $(basename $(word 2,$^)).log | grep "Rerun"`; \
+		STABELIZED=`cat $*.log | grep "Rerun"`; \
 		if [ -z "$$STABELIZED" ]; then \
 			echo "Document stabelized after $$ITER iterations"; \
 			break; \
 		fi; \
 		echo "Document not stabelized, rerunning pdflatex"; \
-		pdflatex -interaction=nonstopmode $(basename $(word 2,$^)) > $@_$$ITER.log; \
+		pdflatex -interaction=nonstopmode -jobname $* $*_pdf.tex > $*_pdf_$$ITER.log; \
 	done
-	@echo "Copying pdf to target file"
-	@cp $(basename $(word 2,$^)).pdf $@
+	@echo "Finished"
 
 
 
 %.dvi : %.dvi.d
-	$(MAKEGIT)
-	@echo "Running latex on $(word 2,$^)"
-	@latex -interaction=nonstopmode $(basename $(word 2,$^)) > $@_0.log
+	@echo "Bulding Root Document $*_dvi.tex"
+	cat conditionals.tex > $*_dvi.tex
+	echo "\dvioutputtrue" >> $*_dvi.tex
+	echo "" >> $*_dvi.tex
+	cat $(word 2,$^) >> $*_dvi.tex
+	@echo "Running latex on $*_dvi.tex"
+	@latex -interaction=nonstopmode -jobname $* $*_dvi.tex > $*_dvi_0.log
 	@BIBS=$(filter *.bib, $^); \
 	if [ -n "$$BIBS" ]; then \
 		echo "bib dependencies: $$BIBS"; \
-	    echo "Running bibtex on $(basename $(word 2,$^))"; \
-	    bibtex  $(basename $(word 2,$^)) > $@_bibtex.log; \
+	    echo "Running bibtex on $*_dvi.tex"; \
+	    bibtex  $*_dvi.tex > $*_dvi_bibtex.log; \
     fi; 
 	@echo "Checking for rerun suggestion"
 	@for ITER in 1 2 3 4; do \
-		STABELIZED=`cat $(basename $(word 2,$^)).log | grep "Rerun"`; \
+		STABELIZED=`cat $*.log | grep "Rerun"`; \
 		if [ -z "$$STABELIZED" ]; then \
 			echo "Document stabelized after $$ITER iterations"; \
 			break; \
 		fi; \
-		echo "Document not stabelized, rerunning pdflatex"; \
-		latex -interaction=nonstopmode $(basename $(word 2,$^)) > $@_$$ITER.log; \
+		echo "Document not stabelized, rerunning latex"; \
+		latex -interaction=nonstopmode -jobname $* $*_dvi.tex > $*_dvi_$$ITER.log; \
 	done
-	@echo "Copying pdf to target file"
-	@cp $(basename $(word 2,$^)).dvi $@
+	@echo "Finished"
 	
 
 
 %.xhtml: %.xhtml.d
-	$(MAKEGIT)
-	@echo "Running latexml on $(word 2,$^)"
-	@latexml $(word 2,$^) --dest=$(basename $@).xml > $(basename $@).xml.log 2>&1
+	@echo "Bulding Root Document $*_xhtml.tex"
+	cat conditionals.tex > $*_xhtml.tex
+	echo "\xhtmloutputtrue" >> $*_xhtml.tex
+	echo "" >> $*_xhtml.tex
+	cat $(word 2,$^) >> $*_xhtml.tex
+	@echo "Running latexml on $*_xhtml.tex"
+	@latexml $*_xhtml.tex --dest=$*.xml > $*.xml.log 2>&1
 	@BIBSTRING=""; \
 	BIB="$(filter *.bib, $^)"; \
 	for BIBFILE in $$BIB; do \
@@ -109,7 +120,7 @@ all: $(addprefix gpu_rrtstar, .dvi .pdf .xhtml)
 	done; \
 	echo $$BIBSTRING > bibstring.txt
 	@echo "postprocessing with `cat bibstring.txt`"
-	@latexmlpost $(basename $@).xml `cat bibstring.txt` --dest=$@ --css=navbar-left.css
+	@latexmlpost $*.xml `cat bibstring.txt` --dest=$@ --css=navbar-left.css
 
 	
 # the 2>/dev/null redirects stderr to the null device so that we don't get error

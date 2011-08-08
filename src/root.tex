@@ -1,0 +1,22 @@
+\documentclass[10pt,oneside]{article}
+\input{preamble_common}
+
+\ifpdfoutput
+    \input{preamble_pdf}
+\else
+    \ifdvioutput
+        \input{preamble_pdf}
+    \else
+        \ifxhtmloutput
+            \input{preamble_html}
+        \else
+            \PackageError{no-package}{unknown output format}{no help text}
+        \fi 
+    \fi    
+\fi
+    
+\pagestyle{plain}
+ 
+\begin{document}
+\input{gpu_rrtstar}
+\end{document} 

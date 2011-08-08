@@ -16,17 +16,21 @@ my $base= $1;
 my $ext = $2;
 
 my $fig;
+my $cmd;
 if($ext eq "pdf")
 {
     $fig = "pdf";
+    $cmd = "\\pdfoutputtrue";
 }
 elsif($ext eq "xhtml" || $ext eq "html")
 {
     $fig = "png";
+    $cmd = "\\xhtmloutputtrue";
 }
 elsif($ext eq "dvi")
 {
     $fig = "eps";
+    $cmd = "\\dvioutputtrue";
 }
 else
 {
@@ -34,50 +38,98 @@ else
 	die;
 }
 
-open DEPEND, "texdepend -expand -format=1 $rootfile |";
 
+open DEPEND, "latex -draftmode -interaction nonstopmode \"\\listfiles \\input{conditionals.tex} $cmd \\input{$rootfile}\" |";
+
+my @packages;
+my @images;
 my @includes;
-my @files;
-my $find_done;
+my @bibs;
+
+my @foundpackages;
+
+my $filelist=0;
 
 while(<DEPEND>)
 {
-    next if(/^#/);
-    chomp;
-    s/\.eps$/\.$fig/;
-    
-    if(/\.tex$/)
+    if($filelist)
     {
-    	push(@includes, $_);
-    }
-    
-    if( (/\.sty$/ || /\.cls$/) && (!/\//) )
-    {
-    	$file = $_;
-    	$find_done = 0;
-        foreach my $dir (@texmf)
+        if(/^\s*\*+\s*$/)
         {
-        	open FIND, "find $dir -iname \"$file\" |";
-        	while(<FIND>)
-        	{
-        		chomp;
-        		push(@files, $_);
-        		$find_done = 1;
-        		last;
-        	} 
-        	close FIND;
-        	
-        	last if($find_done);
-        }	
+        	$filelist=0;
+        	next;
+        }
+        elsif(/^\s*(\S+)\s*/)
+        {
+            $file = $1;
+            if($file=~/\.tex$/)
+            {
+            	push(@includes,$file);
+            }
+            elsif($file=~/\.bib$/)
+            {
+            	push(@bibs,$file);
+            }
+            elsif($file=~/(.+)\.pdf$/ || $file=~/(.+)\.eps$/ || $file=~/(.+)\.png$/ )
+            {
+            	push(@images,"$1.$fig");
+            }
+            elsif($file=~/\.out/)
+            {
+            	next;
+            }
+            else
+            {
+            	push(@packages,$file);
+            }
+            
+            next;
+        }
     }
-    
     else
     {
-        push(@files, $_);
+    	if(/^! LaTeX Error: File `([^']+)' not found.$/)
+        {
+            chomp;
+            push(@images,"$1.$fig");
+            next;        
+        }
+        elsif(/^\s*\*File List\*\s*$/)
+        {
+            $filelist=1;
+            next;
+        }
     }
 }
 
 close DEPEND;
+
+
+
+foreach my $file (@packages)
+{
+    my $found=0;	
+	foreach my $dir (@texmf)
+	{
+		open FIND, "find $dir -iname \"$file\" |";
+		while(<FIND>)
+		{
+			chomp;
+			push(@foundpackages,$_);
+			$found=1;
+			last;
+		}
+		close FIND;
+		last if($found);
+	}
+}
+
+
+my @files;
+push(@files,@foundpackages);
+push(@files,@includes);
+push(@files,@images);
+push(@files,@bibs);
 
 open OUTFILE, ">$output.d";
 
