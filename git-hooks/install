@@ -1,0 +1,2 @@
+cp post-commit ../.git/hooks
+
