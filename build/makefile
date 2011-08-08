@@ -1,34 +1,31 @@
 SVG2PDF := /home/josh/Codes/c/svg2pdf/gitclone/svg2pdf
 SVG2EPS := /home/josh/Codes/c/svg2pdf/gitclone/svg2eps
+CONVERT := convert
 MAKEDEP := ../makedep.pl
 MAKEGIT := ../makegit.pl
-
-gpu_rrtstar.pdf.d   : root.tex
-gpu_rrtstar.xhtml.d : root.tex
-gpu_rrtstar.dvi.d   : root.tex
-
-SOURCE_DIR := ./
-include gpu_rrtstar.pdf.d
-include gpu_rrtstar.xhtml.d
-include gpu_rrtstar.dvi.d
-
-
-#note use TEXINPUTS=".:../../src:" to prepend the current directory and the source
-#directory to the search path for \input and \include directives
-
-CLEAN_EXT   :=  aux txt log cache bbl blg lof lot out toc xml html xhtml pdf d dvi png gz
-CLEAN_IMG   :=  png pdf eps
-
-# these variables are the dependencies for the outputs
-PDF_SRC     := $(PDF_TEX) $(BIB)
-HTML_SRC    := $(HTML_TEX) $(BIB)
-
-CLEAN_CMD   := $(addprefix *.,$(CLEAN_EXT)) \
-               $(addprefix fig/*.,$(CLEAN_IMG)) \
-               $(addprefix fig/blocks*.,$(CLEAN_IMG))
+SOURCE_DIR := ../src
 
 # the 'all' target will make both the pdf and html outputs
-all: $(addprefix gpu_rrtstar, .dvi .pdf .xhtml)
+all:    dvi/gpu_rrtstar.dvi \
+        pdf/gpu_rrtstar.pdf \
+        xhtml/gpu_rrtstar.xhtml
+
+pdf/gpu_rrtstar.pdf.d \
+xhtml/gpu_rrtstar.xhtml.d \
+dvi/gpu_rrtstar.dvi.d : $(SOURCE_DIR)/root.tex
+
+include dvi/gpu_rrtstar.dvi.d
+include pdf/gpu_rrtstar.pdf.d
+include xhtml/gpu_rrtstar.xhtml.d
+
+
+
+
+# note use TEXINPUTS=".:../../src:" to prepend the current directory and the source
+# directory to the search path for \input and \include directives. the latexml
+# equivalent is the --path=dir switch for the command line
+
+
 
 	
 	
@@ -37,13 +34,13 @@ all: $(addprefix gpu_rrtstar, .dvi .pdf .xhtml)
 %.d : 
 	$(MAKEDEP) $< $*
 
-%.eps : %.svg
+dvi/%.eps : $(SOURCE_DIR)/%.svg
 	$(SVG2EPS) $< $@
 	
-%.png : %.svg
-	convert $< $@
+xhtml/%.png : $(SOURCE_DIR)/%.svg
+	$(CONVERT) $< $@
 	
-%.pdf : %.svg
+pdf/%.pdf : $(SOURCE_DIR)/%.svg
 	$(SVG2PDF) $< $@
 	
 git.tex: 
@@ -51,12 +48,13 @@ git.tex:
 
 %.pdf : %.pdf.d
 	@echo "Bulding Root Document $*_pdf.tex"
-	cat conditionals.tex > $*_pdf.tex
+	cat $(SOURCE_DIR)/conditionals.tex > $*_pdf.tex
 	echo "\pdfoutputtrue" >> $*_pdf.tex
 	echo "" >> $*_pdf.tex
 	cat $(word 2,$^) >> $*_pdf.tex
 	@echo "Running pdflatex on $*_pdf.tex"
-	@pdflatex -interaction=nonstopmode -jobname $* $*_pdf.tex > $*_pdf_0.log
+	@export TEXINPUTS=".:pdf/:$(SOURCE_DIR):"; \
+        pdflatex -interaction=nonstopmode -jobname $* $*_pdf.tex > $*_pdf_0.log
 	@BIBS=$(filter *.bib, $^); \
 	if [ -n "$$BIBS" ]; then \
 		echo "bib dependencies: $$BIBS"; \
@@ -71,6 +69,7 @@ git.tex:
 			break; \
 		fi; \
 		echo "Document not stabelized, rerunning pdflatex"; \
+		export TEXINPUTS=".:pdf/:$(SOURCE_DIR):"; \
 		pdflatex -interaction=nonstopmode -jobname $* $*_pdf.tex > $*_pdf_$$ITER.log; \
 	done
 	@echo "Finished"
@@ -79,12 +78,13 @@ git.tex:
 
 %.dvi : %.dvi.d
 	@echo "Bulding Root Document $*_dvi.tex"
-	cat conditionals.tex > $*_dvi.tex
+	cat $(SOURCE_DIR)/conditionals.tex > $*_dvi.tex
 	echo "\dvioutputtrue" >> $*_dvi.tex
 	echo "" >> $*_dvi.tex
 	cat $(word 2,$^) >> $*_dvi.tex
 	@echo "Running latex on $*_dvi.tex"
-	@latex -interaction=nonstopmode -jobname $* $*_dvi.tex > $*_dvi_0.log
+	@export TEXINPUTS=".:dvi/:$(SOURCE_DIR):"; \
+        latex -interaction=nonstopmode -jobname $* $*_dvi.tex > $*_dvi_0.log
 	@BIBS=$(filter *.bib, $^); \
 	if [ -n "$$BIBS" ]; then \
 		echo "bib dependencies: $$BIBS"; \
@@ -99,6 +99,7 @@ git.tex:
 			break; \
 		fi; \
 		echo "Document not stabelized, rerunning latex"; \
+		export TEXINPUTS=".:dvi/:$(SOURCE_DIR):"; \
 		latex -interaction=nonstopmode -jobname $* $*_dvi.tex > $*_dvi_$$ITER.log; \
 	done
 	@echo "Finished"
@@ -107,12 +108,12 @@ git.tex:
 
 %.xhtml: %.xhtml.d
 	@echo "Bulding Root Document $*_xhtml.tex"
-	cat conditionals.tex > $*_xhtml.tex
+	cat $(SOURCE_DIR)/conditionals.tex > $*_xhtml.tex
 	echo "\xhtmloutputtrue" >> $*_xhtml.tex
 	echo "" >> $*_xhtml.tex
 	cat $(word 2,$^) >> $*_xhtml.tex
 	@echo "Running latexml on $*_xhtml.tex"
-	@latexml $*_xhtml.tex --dest=$*.xml > $*.xml.log 2>&1
+	@latexml $*_xhtml.tex --path=xhtml/ --path=$(SOURCE_DIR) --dest=$*.xml > $*.xml.log 2>&1
 	@BIBSTRING=""; \
 	BIB="$(filter *.bib, $^)"; \
 	for BIBFILE in $$BIB; do \
@@ -129,6 +130,6 @@ git.tex:
 	
 # the 2>/dev/null redirects stderr to the null device so that we don't get error
 # messages in the console when rm has nothing to remove
-clean:
-	@-rm -vf $(CLEAN_CMD) 
+clean: $(addprefix clean_,dvi pdf xhtml)
+	-rm -vf $(addsuffix /*,dvi pdf xhtml) 
     

@@ -15,6 +15,18 @@ $output =~ /(.+)\.([^.]+)$/;
 my $base= $1;
 my $ext = $2;
 
+my $outdir=".";
+if($base=~/(.+)\/([^\/]+)/)
+{
+	$outdir=$1;
+}
+
+my $indir=".";
+if($rootfile=~/(.+)\/([^\/]+)/)
+{
+	$indir="$1";
+}
+
 my $fig;
 my $cmd;
 if($ext eq "pdf")
@@ -39,7 +51,7 @@ else
 }
 
 
-open DEPEND, "latex -draftmode -interaction nonstopmode \"\\listfiles \\input{conditionals.tex} $cmd \\input{$rootfile}\" |";
+open DEPEND, "export TEXINPUTS=\".:$indir:\" && latex -draftmode -interaction nonstopmode \"\\listfiles \\input{conditionals.tex} $cmd \\input{$rootfile}\" |";
 
 my @packages;
 my @images;
@@ -72,7 +84,7 @@ while(<DEPEND>)
             }
             elsif($file=~/(.+)\.pdf$/ || $file=~/(.+)\.eps$/ || $file=~/(.+)\.png$/ )
             {
-            	push(@images,"$1.$fig");
+            	push(@images,"$outdir/$1.$fig");
             }
             elsif($file=~/\.out/)
             {
@@ -91,7 +103,7 @@ while(<DEPEND>)
     	if(/^! LaTeX Error: File `([^']+)' not found.$/)
         {
             chomp;
-            push(@images,"$1.$fig");
+            push(@images,"$outdir/$1.$fig");
             next;        
         }
         elsif(/^\s*\*File List\*\s*$/)
@@ -125,26 +137,26 @@ foreach my $file (@packages)
 }
 
 
-my @files;
-push(@files,@foundpackages);
-push(@files,@includes);
-push(@files,@images);
-push(@files,@bibs);
+my @destfiles;
+push(@destfiles,@foundpackages);
+push(@destfiles,@images);
+
+my @srcfiles;
+push(@srcfiles,@includes);
+push(@srcfiles,@bibs);
 
 open OUTFILE, ">$output.d";
 
-print OUTFILE "$output: $rootfile $output.d \\\n";
+print OUTFILE "$output: $rootfile \\\n";
 
-foreach $file (@files)
+foreach $file (@destfiles)
 {
-	if($file=~/^\//)
-    {
-        print OUTFILE "    $file \\\n";
-    }
-    else
-    {
-        print OUTFILE "    \$(SOURCE_DIR)/$file \\\n";
-    }
+    print OUTFILE "    $file \\\n";
+}
+
+foreach $file (@srcfiles)
+{
+	print OUTFILE "    \$(SOURCE_DIR)/$file \\\n";
 }
 
 print OUTFILE "\n\n";
@@ -152,15 +164,17 @@ print OUTFILE "$output.d: $rootfile \\\n";
 
 foreach $file (@includes)
 {
-	if($file=~/^\//)
-	{
-		print OUTFILE "    $file \\\n";
-	}
-	else
-	{
-        print OUTFILE "    \$(SOURCE_DIR)/$file \\\n";
-	}
+    print OUTFILE "    \$(SOURCE_DIR)/$file \\\n";
 }
 
 print OUTFILE "\n\n";
+
+print OUTFILE "clean_$ext: ";
+
+foreach $file (@images)
+{
+	print OUTFILE "    $file \\\n";
+}
+
+print OUTFILE "\n\t-rm -vf \$^\n\n";
 close OUTFILE;

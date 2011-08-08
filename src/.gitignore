@@ -15,3 +15,6 @@ LaTeXML.cache
 gpu_rrtstar.pdf.aux
 gpu_rrtstar.pdf.log
 gpu_rrtstar.pdf.out
+gpu_rrtstar_pdf.tex
+gpu_rrtstar_xhtml.tex
+gpu_rrtstar_dvi.tex
