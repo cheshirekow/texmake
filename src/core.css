@@ -79,7 +79,7 @@ dl.description dl.description dd { margin-left:3em; }
 .listing td.linenumber,
 .listingblock td.linenumber
    { width:3em; text-align:right;}
-div.listing{ font-family: monospace; } 
+div.listing{ font-family: cmtex10, monospace; font-size: smaller; } 
 
 /*======================================================================
  Borders and such */
@@ -114,8 +114,9 @@ td[align="center"], th[align="center"] { white-space:nowrap; }
 .huge       { font-size:150%; }
 .Huge       { font-size:170%; }
 .HUGE       { font-size:200%; }
-.sansserif  { font-family: sans-serif; }
-.typewriter { font-family: monospace; }
+body        { font-family: "CMU Serif", serif }
+.sansserif  { font-family: "CMU Sans Serif", sans-serif; }
+.typewriter { font-family: "CMU Typewriter Text", monospace; }
 .bold       { font-weight: bold; }
 .medium     { font-weight: normal; }
 .italic     { font-style: italic; }
@@ -144,3 +145,4 @@ img.graphics.centering
     margin-left: auto;
     margin-right: auto;
 }
+

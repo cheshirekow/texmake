@@ -133,7 +133,8 @@ Nevermind, this is dumb. Rename ``quadrant'' as ``bin'', and all we're advocatin
 \end{centering}
 \end{figure}
 
-The KD tree respons to three signals, and emits three of it's own (not including configuration signals).
+
+The KD tree responds to three signals, and emits three of it's own (not including configuration signals).
 
 \subsection{Samples Generated}
  When the \texttt{Samples Generated} slot is called, it is passed the start address and number of scalar samples that were generated. The kd tree initiates the nearest node search. It will output as many nodes as there are samples generated. It writes the output into an array of result structures. The result structure has the following fields. 
@@ -141,12 +142,15 @@ The KD tree respons to three signals, and emits three of it's own (not including
 \begin{table}
     \begin{tabular}{|l|l|}
         \hline
-        \textt{state} & n-dim array of the sampled state \\ \hline
-        \textt{node}  & address of the node that was nearest \\ \hline
-        \textt{state} & n-dim array of the nearest node state \\ \hline
-        \textt{collision-free} & boolean \\ \hline
+        \texttt{state} & n-dim array of the sampled state \\ \hline
+        \texttt{node}  & address of the node that was nearest \\ \hline
+        \texttt{state} & n-dim array of the nearest node state \\ \hline
+        \texttt{collision-free} & boolean \\ \hline
     \end{tabular}
 \end{table}
+
+\subsection{Collision Free}
+When the \texttt{Collision Free} slot is called, it is assumed that the collision checker has checked all pairs of states in the \texttt{Samples Generated} output array, and has set the \texttt{collision-free} flag in all the pairs for which there is a collision free path between them. The kd tree block then creates a new node in the kd tree for each of the states whose \texttt{collision-free} bit is set to \texttt{true}.
 
 \section{Steering}
 

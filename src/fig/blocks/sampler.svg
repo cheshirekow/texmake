@@ -57,7 +57,7 @@
      inkscape:cx="180.99572"
      inkscape:cy="7.48394"
      inkscape:document-units="px"
-     inkscape:current-layer="layer8"
+     inkscape:current-layer="layer3"
      showgrid="false"
      units="in"
      inkscape:window-width="1920"
@@ -151,7 +151,7 @@
            x="203.96146"
            style="font-size:20px;font-style:normal;font-weight:normal;line-height:100%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
            xml:space="preserve"><tspan
-             style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;font-family:BKM-cmr10;-inkscape-font-specification:BKM-cmr10"
+             style="font-size:10px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;font-family:CMU Serif;-inkscape-font-specification:CMU Serif Medium"
              y="879.87579"
              x="203.96146"
              id="tspan3799"
@@ -294,10 +294,10 @@
            id="text3848-1-9"
            y="73.687737"
            x="299.16208"
-           style="font-size:20px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           style="font-size:20px;font-style:normal;font-weight:500;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:CMU Serif;-inkscape-font-specification:CMU Serif Medium;font-stretch:normal;font-variant:normal"
            xml:space="preserve"><tspan
              id="tspan3896-0-8"
-             style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:BKM-cmr10;-inkscape-font-specification:BKM-cmr10"
+             style="font-size:10px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:CMU Serif;-inkscape-font-specification:CMU Serif Medium"
              y="73.687737"
              x="299.16208"
              sodipodi:role="line">Go</tspan></text>
