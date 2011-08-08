@@ -1,2 +1,2 @@
-cp post-commit ../.git/hooks
+ln -s post-commit ../.git/hooks
 

@@ -4,6 +4,9 @@
 # commit is made.
 #
 # To enable this hook, rename this file to "post-commit".
+unset GIT_DIR
+unset GIT_WORK_TREE
+
 echo "generating git change log for latex"
 echo "script is being run from $PWD"
 cd src/ && ./makegit.pl
