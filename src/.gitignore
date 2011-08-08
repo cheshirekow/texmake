@@ -8,3 +8,7 @@ navbar-left.css
 *.dvi
 lasthash
 git.tex
+gpu_rrtstar.xml
+gpu_rrtstar.xml.log
+bibstring.txt
+LaTeXML.cache

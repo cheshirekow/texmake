@@ -20,7 +20,19 @@ The fundamental idea behind this strategy is to assign each thread to a subset o
 
 Sampling should be rather straightforward. Mutsuo Saito and Makoto Matsumoto have realsed CUDA codes for using Merseinne Twister to generate uniform random samples on the GPU. Their webpage for this implementation (MTGP) is at \url{http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MTGP/index.html}
 
+\subsection{Implementation}
+
 The kernel uses a block of memory to maintain the state of the algorithm, and outputs an array of random numbers to another block of memory. 
+
+\begin{figure}[H]
+\begin{centering}
+    \includegraphics[scale=1]{\figfile{fig/blocks/sampler}}
+    \caption{Sampler Block}
+\end{centering}
+\end{figure}
+
+The sampler block has a single slot which listens for a signal with an empty message. When this slot is activated the MTGP kernel is run, and a signal is emitted. The emitted signal contains an empty message. The sampler block also emits a signal on configuration changes, which occur by calling class methods to change the size of the block of random numbers that are generated. This signal carries information about the start address and size of the block of random numbers. Downstream blocks should cache this information and use it to read samples when the sampler emits it's other signal.
+
 
 \section{Nearest Neighbor}
 
@@ -112,9 +124,29 @@ This is a simple way to narrow down the search, but I'm not sure it will really 
 
 Nevermind, this is dumb. Rename ``quadrant'' as ``bin'', and all we're advocating here is quadroupling the number of bins.
 
+\section{KD-Tree Implementation}
 
+\begin{figure}[H]
+\begin{centering}
+    \includegraphics[scale=1]{\figfile{fig/blocks/kdtree}}
+    \caption{Sampler Block}
+\end{centering}
+\end{figure}
 
+The KD tree respons to three signals, and emits three of it's own (not including configuration signals).
 
+\subsection{Samples Generated}
+ When the \texttt{Samples Generated} slot is called, it is passed the start address and number of scalar samples that were generated. The kd tree initiates the nearest node search. It will output as many nodes as there are samples generated. It writes the output into an array of result structures. The result structure has the following fields. 
+
+\begin{table}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textt{state} & n-dim array of the sampled state \\ \hline
+        \textt{node}  & address of the node that was nearest \\ \hline
+        \textt{state} & n-dim array of the nearest node state \\ \hline
+        \textt{collision-free} & boolean \\ \hline
+    \end{tabular}
+\end{table}
 
 \section{Steering}
 
