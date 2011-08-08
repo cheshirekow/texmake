@@ -131,5 +131,6 @@ git.tex:
 # the 2>/dev/null redirects stderr to the null device so that we don't get error
 # messages in the console when rm has nothing to remove
 clean:
-	@-rm -vf $(CLEAN_CMD) 
+	-rm -vf $(CLEAN_CMD) 
+	-rm -vf $(addsuffix .tex, $(addprefix gpu_rrtstar_,dvi pdf xhtml) )
     

@@ -19,15 +19,6 @@ include pdf/gpu_rrtstar.pdf.d
 include xhtml/index.xhtml.d
 
 
-
-
-# note use TEXINPUTS=".:../../src:" to prepend the current directory and the source
-# directory to the search path for \input and \include directives. the latexml
-# equivalent is the --path=dir switch for the command line
-
-
-
-	
 	
 
 
@@ -131,6 +122,8 @@ git.tex:
 # the 2>/dev/null redirects stderr to the null device so that we don't get error
 # messages in the console when rm has nothing to remove
 clean: $(addprefix clean_,dvi pdf xhtml)
+	cp xhtml/core.css ./
 	-rm -vf $(addsuffix /*,dvi pdf xhtml)
+	mv core.css xhtml/
 	-rm -vf conditionals.* bibstring.txt 
     
