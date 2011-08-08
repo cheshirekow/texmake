@@ -1,14 +1,45 @@
 \documentclass[10pt,oneside]{article}
-\input{preamble_common}
+
+
+\setlength{\marginparwidth}{1in}
+
+\usepackage{cite}
+\usepackage[bookmarks]{hyperref}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{listings}
+
+\newenvironment{packed_enum}{
+\begin{enumerate}
+  \setlength{\itemsep}{1pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}{\end{enumerate}}
+
+
+\newcommand{\htmlonly}[1]{}
+\newcommand{\pdfonly}[1]{}
+\newcommand{\dvionly}[1]{}
+
+\title{GPU RRT$^*$\\ \small Working Document}
+\author{Josh Bialkowski \\ \small jbialk@mit.edu}
+
+
 
 \ifpdfoutput
-    \input{preamble_pdf}
+    \renewcommand{\pdfonly}[1]{#1}
+    \usepackage{fullpage}
+    \usepackage{float}
 \else
     \ifdvioutput
-        \input{preamble_pdf}
+        \renewcommand{\dvionly}[1]{#1}
+        \usepackage{fullpage}
+        \usepackage{float}
     \else
         \ifxhtmloutput
-            \input{preamble_html}
+            \renewcommand{\htmlonly}[1]{#1}
         \else
             \PackageError{no-package}{unknown output format}{no help text}
         \fi 

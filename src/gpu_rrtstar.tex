@@ -11,7 +11,7 @@ The fundamental idea behind this strategy is to assign each thread to a subset o
 
 \begin{figure}[H]
 \begin{centering}
-    \includegraphics[scale=1]{\figfile{fig/thread_kdtree}}
+    \includegraphics[scale=1]{fig/thread_kdtree}
     \caption{Division Strategy}
 \end{centering}
 \end{figure}
@@ -26,7 +26,7 @@ The kernel uses a block of memory to maintain the state of the algorithm, and ou
 
 \begin{figure}[H]
 \begin{centering}
-    \includegraphics[scale=1]{\figfile{fig/blocks/sampler}}
+    \includegraphics[scale=1]{fig/blocks/sampler}
     \caption{Sampler Block}
 \end{centering}
 \end{figure}
@@ -47,7 +47,7 @@ Instead of a binary search tree, we can store a $n$-ary search tree, where a sin
 
 \begin{figure}[H]
 \begin{centering}
-    \includegraphics[scale=1]{\figfile{fig/nary_search_tree}}
+    \includegraphics[scale=1]{fig/nary_search_tree}
     \caption{$n$-ary Search Tree}
     \label{fig:nary_tree}
 \end{centering}
@@ -58,7 +58,7 @@ Additionally, we can store some depth of a node and it's children continuously i
 
  \begin{figure}[H]
 \begin{centering}
-    \includegraphics[scale=1]{\figfile{fig/ddepth_macro_tree}}
+    \includegraphics[scale=1]{fig/ddepth_macro_tree}
     \caption{$d$-depth Search Tree}
     \label{fig:ddepth_tree}
 \end{centering}
@@ -73,7 +73,7 @@ Assuming that the number of threads is unchanging then we can store a quad-tree 
 
 \begin{figure}[H]
 \begin{centering}
-    \includegraphics[scale=1]{\figfile{fig/nonempty_search}}
+    \includegraphics[scale=1]{fig/nonempty_search}
     \caption{Non-empty Search}
     \label{fig:nonempty}
 \end{centering}
@@ -106,7 +106,7 @@ Once all bins are occupied by at least one node, we can quickly narrow down the 
 
 \begin{figure}[H]
 \begin{centering}
-    \includegraphics[scale=1]{\figfile{fig/nonempty_full_quad}}
+    \includegraphics[scale=1]{fig/nonempty_full_quad}
     \caption{Quandrants}
 \end{centering} 
 \end{figure}
@@ -128,7 +128,7 @@ Nevermind, this is dumb. Rename ``quadrant'' as ``bin'', and all we're advocatin
 
 \begin{figure}[H]
 \begin{centering}
-    \includegraphics[scale=1]{\figfile{fig/blocks/kdtree}}
+    \includegraphics[scale=1]{fig/blocks/kdtree}
     \caption{Sampler Block}
 \end{centering}
 \end{figure}
@@ -171,7 +171,7 @@ Here is an idea for a search index for the 2D Single integrator problem. The ide
 
 \begin{figure}[H]
 \begin{centering}
-    \includegraphics[scale=1]{\figfile{fig/delauny_collision}}
+    \includegraphics[scale=1]{fig/delauny_collision}
     \caption{Delauny Triangulation}
     \label{fig:delauny}
 \end{centering} 
@@ -199,7 +199,7 @@ Generating a list of all threads that need a new block sounds like a reduction. 
 
 \begin{figure}[H]
 \begin{centering}
-    \includegraphics[scale=1]{\figfile{fig/near_list_allocator}}
+    \includegraphics[scale=1]{fig/near_list_allocator}
     \caption{Near List Allocator}
     \label{fig:near_alloc}
 \end{centering} 
@@ -220,7 +220,7 @@ Will we hit a huge performance penalty if the child node lists are stored as lin
 
 \begin{figure}[H]
 \begin{centering}
-    \includegraphics[scale=1]{\figfile{fig/child_list}}
+    \includegraphics[scale=1]{fig/child_list}
     \caption{Linked-list of arrays}
 \end{centering} 
 \end{figure}
@@ -250,7 +250,7 @@ Since the race condition on parenting will actually result in throwing out evalu
  
 \begin{figure}[H]
 \begin{centering}
-    \includegraphics[scale=1]{\figfile{fig/kernel_near_rotate}}
+    \includegraphics[scale=1]{fig/kernel_near_rotate}
     \caption{Near Reduction}
 \end{centering} 
 \end{figure}
@@ -261,7 +261,7 @@ After this, all potential race conditions on reparenting the potential child wil
  
 \begin{figure}[H]
 \begin{centering}
-    \includegraphics[scale=1]{\figfile{fig/kernel_parent_rotate}}
+    \includegraphics[scale=1]{fig/kernel_parent_rotate}
     \caption{Parent Reduction}
 \end{centering} 
 \end{figure} 
