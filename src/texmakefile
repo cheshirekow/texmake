@@ -1,0 +1,17 @@
+# format for rules is
+# sourcefile : output_1 output_2 ...
+#
+# You can put outputs on separate lines if you end the previous line with a \
+# For instance
+#
+# sourcefile: output_1  \
+#               output_2 \
+#               output_3 \
+#
+# you can tell texmake to recurse into subdirectories by using a line like
+# +subdir1
+# +subdir2
+#
+
+root.tex: pdf/gpu_rrtstar.pdf dvi/gpu_rrtstar.dvi xhtml/index.xhtml
+

@@ -145,6 +145,10 @@ my @srcfiles;
 push(@srcfiles,@includes);
 push(@srcfiles,@bibs);
 
+open OUTFILE, ">$output.dirty";
+print OUTFILE "\n";
+close OUTFILE;
+
 open OUTFILE, ">$output.d";
 
 print OUTFILE "$output: $rootfile \\\n";
@@ -160,14 +164,7 @@ foreach $file (@srcfiles)
 }
 
 print OUTFILE "\n\n";
-print OUTFILE "$output.d: $rootfile \\\n";
-
-foreach $file (@includes)
-{
-    print OUTFILE "    \$(SOURCE_DIR)/$file \\\n";
-}
-
-print OUTFILE "\n\n";
+print OUTFILE "$output.d: $output.dirty \\\n";
 
 print OUTFILE "clean_$ext: ";
 
