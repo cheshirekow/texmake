@@ -103,15 +103,15 @@ if($outext eq "pdf")
     $fig = "pdf";
     $cmd = "\\pdfoutputtrue";
 }
-elsif($outext eq "xhtml" || $ext eq "html")
-{
-    $fig = "png";
-    $cmd = "\\xhtmloutputtrue";
-}
 elsif($outext eq "dvi")
 {
     $fig = "eps";
     $cmd = "\\dvioutputtrue";
+}
+elsif($outext eq "xhtml" || $outext eq "html")
+{
+    $fig = "png";
+    $cmd = "\\xhtmloutputtrue";
 }
 else
 {
@@ -159,7 +159,7 @@ $params{'outjob'} = $outjob;
 $params{'outext'} = $outext;
 $params{'root'}   = $rootfile;
 
-if($ext == "dvi" || $ext == "pdf")
+if($outext eq "dvi" || $outext eq "pdf")
 {
     build_dvipdf(\%params);
 }
@@ -255,7 +255,7 @@ sub build_dvipdf_child
     $outext = $params{'outext'};
         
     my $latex="latex";
-    if($outext == "pdf"){ $latex = "pdflatex"; }
+    if($outext eq "pdf"){ $latex = "pdflatex"; }
     
     my $cmd = <<END;
 export TEXINPUTS=".:$outdir:$srcdir:" \\
@@ -403,7 +403,7 @@ END
     {
         if($file=~/(.+)\/([^\/]+)/)
         {
-            my $dir=1;
+            my $dir=$1;
             unless (-e $dir)
             {
                 print "[NOTICE]  making directory $dir\n";
