@@ -3,6 +3,7 @@
 use Fcntl;
 use Proc::Killfam;  #apt-get libproc-processtable-perl
 use File::Path qw(make_path);
+use Switch;
 
 if($#ARGV < 1)
 {
@@ -228,7 +229,7 @@ sub build_dvipdf
     print "[NOTICE]  parent got the signal, starting builder\n";
     
     # call the submodule which starts the builder
-    build_dvipdf_child($hashref);
+    my $buildresult = build_dvipdf_child($hashref);
         
     # now that the builder is done we can stop the watcher
     print "[NOTICE]  Killing watcher $pid_watch\n";
@@ -239,6 +240,108 @@ sub build_dvipdf
     waitpid($pid_watch,0);
     
     print "[NOTICE]  Process tree has been killed\n";
+    
+    build_dvipdf_clean($hashref);
+    
+    switch ($buildresult)
+    {
+        case -1
+        {
+            print "[ERROR]   Latex failed, check error log\n"
+        }
+        
+        case 1
+        {
+            print "[NOTICE]  recursing on make\n";
+            system ("make " . $ARGV[0] );
+        }
+        
+        case 0
+        {
+            print "[NOTICE]  done\n";            
+        }
+    }
+
+}
+
+
+
+
+sub build_dvipdf_clean
+{
+    my $hashref = shift;
+    my %params  = %$hashref;
+    
+    $srcdir = $params{'srcdir'};
+    $outdir = $params{'outdir'};
+    $outjob = $params{'outjob'};
+    $outext = $params{'outext'};
+
+    my $rootfile    = "$outdir/$outjob\_$outext.tex";
+    my $touchfile   = "$outdir/touchlist.txt";    
+    my $cleanfile   = "$outdir/clean_$outjob.$outext.d";
+    my $cleancache  = "$outdir/clean_$outjob.$outext.cache";
+    
+    my %outputs;    # output files
+    
+    # if the cachefile for outputs exists, then load it
+    if( -e $cleancache )
+    {
+        open CACHE, "$cleancache" or die "Failed to open cachefile: $cleancache$!\n";
+        while(<CACHE>)
+        {
+            chomp;
+            next if /^\s*$/;    #skip blank lines
+            $outputs{$_} = 1;
+        }
+        close CACHE;
+    }
+    
+    open TOUCH, "$touchfile" or die "Failed to open $touchfile $!\n";
+    
+    while(<TOUCH>)
+    {
+        chomp;
+        if( /([^,]+),(.+)/ )
+        {
+            $file   = $1;
+            $notify = $2;
+            if($notify eq "IN_MODFIY" || $notify eq "IN_CLOSE_WRITE" || $notify eq "IN_CREATE")
+            {
+                $outputs{$file} = $_;
+            }
+        }
+        else
+        {
+            print "[WARNING] bad touchfile entry: $_\n";
+        }
+    }
+    
+    close TOUCH;
+    
+    open CLEAN, ">$cleanfile" or die "Failed to open $cleanfile $!\n";
+    open CACHE, ">$cleancache" or die "Failed to open $cleancache $!\n";
+    
+    print CLEAN "clean: \\\n";
+    print "[NOTICE]  Touched files\n          ------------------------\n";
+    
+    foreach my $file (keys %outputs)
+    {
+        print "             $file " . $outputs{$file} . "\n";
+        print CLEAN "    $outdir/$file \\\n";
+        print CACHE "$file \n";
+    }
+    
+    print CLEAN <<END;
+    $cleanfile \\
+    $cleancache \\
+    $rootfile \\
+    $touchfile
+
+END
+
+    close CLEAN;
+    close CACHE;
 }
 
 
@@ -253,6 +356,38 @@ sub build_dvipdf_child
     $outdir = $params{'outdir'};
     $outjob = $params{'outjob'};
     $outext = $params{'outext'};
+    
+    my $rootfile    = "$outjob\_$outext.tex";
+    my $depfile     = "$outdir/$outjob.$outext.d";
+    my $depcache    = "$outdir/$outjob.$outext.cache";
+    my $cleanfile   = "$outdir/clean_$outjob.$outext.d";
+    my $cleancache  = "$outdir/clean_$outjob.$outext.cache";
+    
+    my %depends;    # dependencies mapping to their full path
+    my %outputs;    # output files
+    
+    # if the cachefile for depencies exists, then load it
+    if( -e $depcache )
+    {
+        open CACHE, "$depcache" or die "Failed to open cachefile: $depcache$!\n";
+        while(<CACHE>)
+        {
+            chomp;
+            if(/([^:\s]+)\s*:\s*([^:\s]+)/)
+            {
+                $depends{$1} = $2;
+            }
+            else
+            {
+                print "[WARNING] bad cachefile entry: $_\n";
+            }
+        }
+        close CACHE;
+    }
+    
+
+    
+    
         
     my $latex="latex";
     if($outext eq "pdf"){ $latex = "pdflatex"; }
@@ -310,24 +445,27 @@ END
         }
     }
     
-    print "[NOTICE]  Missing Files:\n--------------------------\n";
+    close BUILD;
+    
+    my $latexreturn = ${^CHILD_ERROR_NATIVE};
+    print "[NOTICE]  Latex status: $latexreturn\n";
+    
+    print "[NOTICE]  Missing Files:\n          --------------------------\n";
     foreach (@missing)
     {
-        print "   $_\n";
+        print "          $_\n";
     }
+    print "\n";
     
-    print "[NOTICE]  File List:\n-------------------------\n";
+    print "[NOTICE]  File List:\n          -------------------------\n";
     foreach (@filelist)
     {
-        print "   $_\n";
+        print "          $_\n";
     }
-    
-    close BUILD;
     
     my (@sty,@cls,@tex,@bib,@fig);
     
     my $arrref=undef;
-    my $depfile = "$outdir/$outjob.$outext.d";
     my @auxdirs;
     
     my %path;
@@ -347,7 +485,8 @@ END
     my @graphics;
     
     # now open the dependency file to write all dependencies
-    open DEPEND, ">$depfile" or die "Failed to open $depfile for writing\n";
+    open DEPEND, ">$depfile" or die "Failed to open $depfile for writing $!\n";
+    open CACHE,  ">$depcache" or die "Failed to open $depcache for writing $!\n";   
     
     print DEPEND "$outdir/$outjob.$outext : \\\n";
     foreach my $file (@filelist)
@@ -358,15 +497,26 @@ END
             my $ext     =$2;
             
             next if( defined $ignore{$ext} );
-
-            my $path = "$outdir:$srcdir:";
-            $path = $path{$ext} if(defined $path{$ext});
             
-            $resolved = `$kpsewhich -progname $latex -path $path $file`;
-            chomp($resolved);
+            if(defined $depends{$file})
+            {
+                $resolved = $depends{$file};
+            }
+            else
+            {
+                print "[NOTICE]  resolving dependency $file\n";
+                
+                my $path = "$outdir:$srcdir:";
+                $path = $path{$ext} if(defined $path{$ext});
+                
+                $resolved = `$kpsewhich -progname $latex -path $path $file`;
+                chomp($resolved);
+            }
+            
             if(length($resolved) > 0)
             {
                 print DEPEND "   $resolved \\\n";
+                print CACHE  "$file : $resolved\n";
             }
             else
             {
@@ -376,8 +526,9 @@ END
         else
         {
             push (@graphics,$file);
-            $file.=".$fig";
-            print DEPEND "   $outdir/$file \\\n";
+            $resolved = $depends{$file};
+            print DEPEND "   $outdir/$file.$fig \\\n";
+            print CACHE  "$outdir/$file.$fig : $resolved\n";
         }
     }
     
@@ -392,8 +543,7 @@ END
         {
             $missinggraphic = 1;
             push (@graphics,$file);
-            $file.=".$fig";
-            print DEPEND "   $outdir/$file \\\n";
+            print DEPEND "   $outdir/$file.$fig \\\n";
         }
     }
     
@@ -403,7 +553,7 @@ END
     {
         if($file=~/(.+)\/([^\/]+)/)
         {
-            my $dir=$1;
+            my $dir="$outdir/$1";
             unless (-e $dir)
             {
                 print "[NOTICE]  making directory $dir\n";
@@ -418,6 +568,7 @@ END
         while(<FIND>)
         {
             print DEPEND "$outdir/$file.$fig : $_\n\n";
+            print CACHE  "$outdir/$file.$fig : $_\n";
             $found = 1;
             last;
         }
@@ -426,9 +577,24 @@ END
     }
     
     close DEPEND;
+    close CACHE;
     
-    print "[NOTICE]  Determined that build failed due to missing graphics, rebuilding\n";
-    exec "make " . $ARGV[0];
+
+    if($latexreturn && $missinggraphic)
+    {
+        print "[NOTICE]  Determined that build failed due to missing graphics\n";
+        return 1;
+    }
+    elsif($latexreturn)
+    {
+        print "[ERROR]   Latex exited with nonzero status and I have no idae why\n";
+        return -1;
+    }
+    else
+    {
+        return 0;
+    }
+    
 }
 
 

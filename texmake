@@ -41,7 +41,7 @@ else
     print CACHE "\$svg2pdf=    \"" . $bin   . "\";\n";
     push(@failed, "svg2pdf") if(${^CHILD_ERROR_NATIVE} != 0);
     
-    $bin = `which svg2pdf`;
+    $bin = `which svg2eps`;
     chomp($bin);
     print CACHE "\$svg2eps=    \"" . $bin   . "\";\n";
     push(@failed, "svg2eps") if(${^CHILD_ERROR_NATIVE} != 0);
@@ -232,15 +232,6 @@ foreach my $output ( @all )
 	print ROOTDEPEND "    $output \\\n";
 }
 
-print ROOTDEPEND "\n\n";
-print ROOTDEPEND "clean_root : \\\n";
-foreach my $output ( @clean )
-{
-    print ROOTDEPEND "    $output \\\n";
-}
-print ROOTDEPEND "\n";
-print ROOTDEPEND "\trm -fv \$^\n\n";
-
 close ROOTDEPEND;
 
 open MAKEFILE, ">makefile" or die "Failed to open makefile $!\n";
@@ -257,9 +248,8 @@ TEXBUILD:= $texmakebuild
 END
 
 print MAKEFILE <<'END';
+PWD         := $(shell pwd)
 
-PDFLATEX    := pdflatex -interaction nonstopmode -output-directory ./pdf -jobname
-LATEX       := latex -interaction nonstopmode 
 
 # rules for when we need to rebuild the root dependencies (and this makefile)
 include roots.d.d
@@ -269,21 +259,23 @@ include roots.d.d
 include roots.d
 
 %.eps : 
-	$(SVG2EPS) $< $@
+	@echo "Converting $(subst $(PWD),,$@)"
+	@$(SVG2EPS) $< $@ 
 	
-%.png : 
-	$(CONVERT) $< $@
-    
+%.png :
+	@echo "Converting $(subst $(PWD),,$@)"
+	@$(CONVERT) $< $@
+	
 %.pdf : 
-	$(SVG2PDF) $< $@
-    
-git.tex: 
-	$(MAKEGIT)
-    
+	@echo "Converting $(subst $(PWD),,$@)"
+	@$(SVG2PDF) $< $@
+
 %.dvi : 
+	@echo "Converting $(subst $(PWD),,$@)"
 	${TEXBUILD} $@ $< $(filter *.bib, $^)
 
 %.pdf : %.pdf.d
+	@echo "Building $(subst $(PWD),,$@)"
 	${TEXBUILD} $@ $< $(filter *.bib, $^)
 
 %.xhtml: %.xhtml.d
@@ -307,22 +299,10 @@ git.tex:
 	@echo "postprocessing with `cat bibstring.txt`"
 	@latexmlpost $*.xml `cat bibstring.txt` --dest=$@ --css=navbar-left.css
 
-    
-
-clean: clean_root
+clean:
+	@rm -rvf $^
 
 END
 
 close MAKEFILE; 
-
-
-open CONDITIONALS, ">conditionals.tex" or die "Failed to open conditionals.tex $!\n";
-
-print CONDITIONALS <<END;
-\newif\ifpdfoutput
-\newif\ifxhtmloutput
-\newif\ifdvioutput
-END
-
-close CONDITIONALS;
 

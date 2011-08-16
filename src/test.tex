@@ -1,0 +1,59 @@
+\documentclass[10pt,oneside]{article}
+
+
+\setlength{\marginparwidth}{1in}
+
+\usepackage{cite}
+\usepackage{graphicx}
+
+
+\title{Texmake Test}
+\author{Josh Bialkowski \\ \small jbialk@mit.edu}
+
+
+
+\ifpdfoutput
+    \usepackage{fullpage}
+    \usepackage{float}
+\else
+    \ifdvioutput
+        \usepackage{fullpage}
+        \usepackage{float}
+    \else
+        \ifxhtmloutput
+        
+        \else
+            \PackageError{no-package}{unknown output format}{no help text}
+        \fi 
+    \fi    
+\fi
+    
+\pagestyle{plain}
+ 
+\begin{document}
+
+\maketitle
+\section{Section A}
+
+\section{Section B}
+
+\begin{figure}[h]
+\begin{centering}
+    \includegraphics[scale=1]{fig/image_a}
+    \caption{Graphic A}
+\end{centering}
+\end{figure}
+
+\section{Section C}
+
+\begin{figure}[h]
+\begin{centering}
+    \includegraphics[scale=1]{fig/b/image_b}
+    \caption{Graphic B}
+\end{centering}
+\end{figure}
+
+\bibliography{references}
+\bibliographystyle{plain}
+
+\end{document} 
