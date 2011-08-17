@@ -81,21 +81,23 @@ sub go()
     
     # after running latex, we may need to run it again so we'll run until
     # the flag gets turned off
+    $this->run_latex();
+    $this->resolve_dependencies();
     
+    if( $$bibflag )
+    {
+        $this->run_bibtex();
+        $this->resolve_bib_dependencies();
+        $$texflag = 1;
+    }
     
     while($$texflag)
     {
         $this->run_latex();
-        $this->resolve_dependencies();
-        
-        if( $$bibflag )
-        {
-            $this->run_bibtex();
-            $$texflag = 1;
-        }
-        
-        $this->process_exit_code();
+        $this->resolve_dependencies();    
     }
+    
+    $this->process_exit_code();
     
     $this->kill_watcher();
     $this->make_cleanfile();
@@ -424,6 +426,9 @@ sub resolve_dependencies
     # graphic file but that we know how to build it
     my $isMissingGraphic    = 0;
     
+    # this flag will 
+    my $usesBibtex          = 0;
+    
     my %cache;      # previously resolved dependencies
     my %depends;    # dependencies mapping to their full path
     my %path;       # maps file extensions to their kpsewhich path
@@ -521,6 +526,13 @@ sub resolve_dependencies
             # if the extension is one of the ones we ignore, then we stop here
             # and move on to the next file
             next if( defined $ignore{$ext} );
+            
+            # if the file is a .bbl file then it means this document requires
+            # bibtex
+            if($ext eq "bbl")
+            {
+                $usesBibtex =  1;
+            }
             
             # if we have already resolved this files absolute path, then we
             # don't need to resolve it again
@@ -671,18 +683,183 @@ sub resolve_dependencies
             print_w "Failed to find graphics source for $file.$fig\n" 
                 unless ($found);    
         }
-        
-        
+    }
+    
+    # if we found a dependency on the bibliography file, then we'll go ahead
+    # and include the bibliography makefile
+    if($usesBibtex)
+    {
+        print $fh_dep <<END;
+-include $outdir/$outjob\_$outext.bbl     
+END
     }
 
     # now we're all done building the dependency and cachefiles    
     close $fh_dep;
     close $fh_cache;
     
-    $this->{'is_missing_graphic'} = $isMissingGraphic;
+    $this->{'is_missing_graphic'}   = $isMissingGraphic;
+    $this->{'do'}->{'bibtex'}       = $usesBibtex;
 }
 
 
+
+
+sub resolve_bib_dependencies
+{
+    my $this    = shift;
+    
+    my $srcdir = $this->{'src'}->{'dir'};
+    my $outdir = $this->{'out'}->{'dir'};
+    my $outjob = $this->{'out'}->{'job'};
+    my $outext = $this->{'out'}->{'ext'};
+    my $fig    = $this->{'figext'};
+    
+    my $depfile     = "$outdir/$outjob\_$outext.bbl.d";
+    my $depcache    = "$outdir/$outjob\_$outext.bbl.cache";
+    
+    my $filelist    = $this->{'bib_files'};     # files that bibtex loaded
+    my $missing     = $this->{'bib_missing'};   # files that bibtex couldn't find
+    
+    my %cache;      # previously resolved dependencies
+    my %depends;    # dependencies mapping to their full path
+    my %path;       # maps file extensions to their kpsewhich path
+    my %ignore;     # file extensions for which we will not resolve a path
+    
+    my @graphics;   # array of graphics included   
+    
+    my $resolved;   # temporary for resolved names
+    
+    my $fh_dep;     # file handle for the dependency file
+    my $fh_cache;   # file handle for the cache file
+    
+    my $kpsewhich   = $this->{'cache'}->{'kpsewhich'};
+    my $find        = $this->{'cache'}->{'find'};
+    my $bibtex      = $this->{'cache'}->{'bibtex'};
+
+    # add the source and build directories to the list of paths for kpsewhich
+    my $path        = "$outdir:$srcdir:".
+                        `$kpsewhich -progname latex -show-path .bib`;
+    chomp($path);
+    
+    # now we open the cachefile it exists, and load all files that we've 
+    # resolved on previous iterations
+    if( -e $depcache )
+    {
+        unless( open($fh_cache, "<", $depcache) )
+        {
+            print_f "Failed to open dependency cache $depcache $!";
+            die;
+        }
+        
+        while(<$fh_cache>)
+        {
+            chomp;
+            
+            # cached dependencies should be in the form of name : abs_path
+            if(/^([^:\s]+)\s*:\s*([\s]+)/)
+            {
+                $cache{$1} = $2;
+            }
+            
+            else
+            {
+                print_w "Malformed cache line: $_"
+            }
+        }
+        
+        close $fh_cache;
+    }
+    
+    
+    # we open up the output files for the dependency list (that make understand)
+    # and for the cachefile (which we understand)
+    unless( open($fh_dep, ">", $depfile) )
+    {
+        print_f "Failed to open $depfile for writing $!";
+        die;
+    }
+    
+    unless( open($fh_cache, ">", $depcache) )
+    {
+        print_f "Failed to open $depcache for writing $!";
+        die;
+    }
+    
+    print $fh_dep "$outdir/$outjob\_$outext.bbl : \\\n";
+    
+    print_n "Resolving bib dependencies";
+    
+    # now we start going through the file list that latex generated and we
+    # resolve any files that aren't already cached
+    foreach my $file (@$filelist)
+    {
+        # if the file has an extension, then we can use kpsewhich to find its
+        # absolute path 
+        if($file=~/(.+)\.bib$/)
+        {
+            my $base    =$1;
+            
+            # if we have already resolved this files absolute path, then we
+            # don't need to resolve it again
+            if(defined $cache{$file})
+            {
+                $resolved = $cache{$file};
+            }
+            
+            # otherwise, we actually have to do the slow search to find out
+            # where the file is stored
+            else
+            {
+                print_n "resolving dependency $file";
+                
+                # call kpsewhich to find the absolute path of the the file
+                # in question                
+                print_n "$kpsewhich -progname latex -path $path $file";
+                $resolved = `$kpsewhich -progname latex -path $path $file`;
+                chomp($resolved);
+            }
+            
+            # if the file was found, then print it to the cache and to the 
+            # dependency file
+            if(length($resolved) > 0)
+            {
+                print $fh_dep   "   $resolved \\\n";
+                print $fh_cache "$file : $resolved\n";
+            }
+            
+            # if the file was not found then print a warning, but hope that
+            # latex is ok
+            else
+            {
+                print_w "Failed to find file $file : $resolved\n";
+            }
+        }
+        
+        # if the file is not a .bib file than I have no idea what to do
+        else
+        {
+            print_w "Not a bibliography file $file";
+        }
+    }
+    
+    # now we iterate through all the files that latex says it couldn't find, 
+    # and add them to the dependency list, after we find them
+    foreach my $file (@$missing)
+    {
+        print_w "$file was marked as missing";
+    }
+    
+    
+    # now we're done printing the dependency list for the actual output, so 
+    # we need to insert some space before the graphics rules are added
+    print $fh_dep "\n";
+    print $fh_dep "\t\$(TEXBUILD) \$@\n\n";
+    
+    # now we're all done building the dependency and cachefiles    
+    close $fh_dep;
+    close $fh_cache;
+}
 
 
 
