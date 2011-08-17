@@ -139,6 +139,10 @@ sub check_for_cachefile()
     {
         $cache{'project_root'} = $this->{'project_root'};
     }
+    else
+    {
+        $this->{'project_root'} = $cache{'project_root'};
+    }
     
     $this->{cache} = \%cache;  
 }
