@@ -170,6 +170,7 @@ sub find_texmakefiles
     while( ($#directories + 1) > 0 )
     {
         my $dir         = pop @directories;
+        my $rel_dir     = "$dir/";
         my $rel_path    = "$dir/texmakefile";
         my $abs_dir     = "$src/$dir";
         my $abs_path    = "$src/$dir/texmakefile";
@@ -208,7 +209,7 @@ sub find_texmakefiles
                 # process the rule if it matches the syntax "input: outputs"
                 elsif( /([^:]+):(.+)/ )
                 {
-                    my $root      = "$rel_path/$1";
+                    my $root      = "$rel_dir/$1";
                     my @outputs   = split /\s+/, $2;
                     
                     if( exists ${$rules}{$root} )
@@ -376,6 +377,7 @@ SVG2PDF := $svg2pdf
 SVG2EPS := $svg2eps
 CONVERT := $convert
 TEXMAKE := $texmake
+TEXBUILD:= $texmake build
     
 END
     
@@ -403,7 +405,7 @@ include roots.d
 	@$(SVG2PDF) $< $@
 	
 %.dvi : 
-	@echo "Converting $(subst $(PWD),,$@)"
+	@echo "Building $(subst $(PWD),,$@)"
 	${TEXBUILD} $@ $< $(filter *.bib, $^)
 
 %.pdf : %.pdf.d

@@ -47,7 +47,7 @@ sub new()
     shift;
 
     # this method requires at least two parameters
-    if( ($#_ +1) < 2 )
+    if( ($#_ +1) >= 2 )
     {
         $this->{'out'}->{'file'}  = shift;
         $this->{'src'}->{'file'}  = shift;

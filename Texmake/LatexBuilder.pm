@@ -32,13 +32,15 @@ sub new()
     {
         case "pdf"
         {
-            $this->{'cmd'} = $this->{'cache'}->{'pdflatex'};
+            $this->{'cmd'}      = $this->{'cache'}->{'pdflatex'};
+            $this->{'figext'}   = "pdf";
             $parent->create_rootfile("\\pdfoutputtrue");
         }
         
         case "dvi"
         {
             $this->{'cmd'} = $this->{'cache'}->{'latex'};
+            $this->{'figext'}   = "eps";
             $parent->create_rootfile("\\dvioutputtrue");
         }
     }
@@ -56,6 +58,10 @@ sub new()
     # this flag gets set to true if we need ot exit with an unsuccessful code
     # due to a failed build
     $this->{'fail'}    = 0;
+    
+    # this is where the bibtex scanner will stores bibliography files that
+    # bibtex generates
+    $this->{'bib_files'}    = ();
     
     bless($this);   # tell the reference it is a reference to a 
                     # Texmake::LatexBuilder object
@@ -81,12 +87,14 @@ sub go()
     {
         $this->run_latex();
         $this->resolve_dependencies();
-        $this->process_exit_code();
         
         if( $$bibflag )
         {
             $this->run_bibtex();
+            $$texflag = 1;
         }
+        
+        $this->process_exit_code();
     }
     
     $this->kill_watcher();
@@ -173,12 +181,12 @@ sub watch_child
     setpgrp(0,0);
     
     my $outdir     = $this->{'out'}->{'dir'};
-    my $dirwatch   = $this->{'catch'}->{'directoryWatch'};
+    my $dirwatch   = $this->{'cache'}->{'directoryWatch'};
     
     print_n "forked watcher to observe $outdir with $dirwatch";
     
     print $fh_toparent "start\n";
-    system("$dirwatch $outdir > $outdir/touchlist.txt");
+    exec("$dirwatch $outdir > $outdir/touchlist.txt");
 }
 
 
@@ -202,7 +210,8 @@ sub kill_watcher
 sub run_latex
 {
     my $this    = shift;
-    
+    $this->{'do'}->{'latex'}    = 0;
+       
     my $srcdir = $this->{'src'}->{'dir'};
     my $outdir = $this->{'out'}->{'dir'};
     my $outjob = $this->{'out'}->{'job'};
@@ -236,6 +245,8 @@ END
         print_f "Failed to spawn latex process $!";
         die;
     }
+    
+    print_n "Scanning latex output";
     
     while(<$fh>)
     {
@@ -290,9 +301,9 @@ END
             
             # if this regex matches, then latex is telling us it's expecting
             # a bibliography file from bibtex, but that there is none here
-            elsif(/File (.+).bbl not found/)
+            elsif(/No file (.+)\.bbl/)
             {
-                
+                $this->{'do'}->{'bibtex'} = 1;
             }
             
             # if this regex matches, then latex is telling us to rerun to 
@@ -327,6 +338,66 @@ END
     $this->{'latex_exit'}    = $latexreturn;   
     $this->{'missing_files'} = \@missing;
     $this->{'loaded_files'}  = \@filelist;
+}
+
+
+
+
+
+
+sub run_bibtex
+{
+    my $this    = shift;
+    $this->{'do'}->{'bibtex'}    = 0;
+       
+    my $srcdir = $this->{'src'}->{'dir'};
+    my $outdir = $this->{'out'}->{'dir'};
+    my $outjob = $this->{'out'}->{'job'};
+    my $outext = $this->{'out'}->{'ext'};
+    
+    my $auxfile     = "$outdir/$outjob\_$outext";
+    
+    my $bibtex      = $this->{'cache'}->{'bibtex'}; # absolute path to binary
+    my $bibtexreturn= 0;                            # exit status of bibtex
+    
+    my @filelist;   # a list of all bib files 
+    my $fh;
+    
+    # this is the command we'll pass to the shell to spawn the latex process
+    my $cmd = <<END;
+export BIBINPUTS=".:$outdir:$srcdir:" \\
+    && $bibtex  $auxfile 2>&1
+END
+
+    print_n "Bibtex command:\n $cmd ";
+    
+    # now we spawn bibtex in a child process and pipe the output back
+    # to this process
+    unless( open($fh, "-|", $cmd) )
+    {
+        print_f "Failed to spawn bibtex process $!";
+        die;
+    }
+    
+    print_n "Scanning bibtex output";
+    
+    while(<$fh>)
+    {
+        chomp;
+        if(/^Database file #\d+: (.+)/)
+        {
+            push(@filelist,$1);
+        }
+    }
+    
+    close $fh;
+    
+    $bibtexreturn = ${^CHILD_ERROR_NATIVE};
+    
+    print_n "Bibtex return code: $bibtexreturn";
+    
+    $this->{'bibtex_exit'}  = $bibtexreturn;   
+    $this->{'bib_files'}    = \@filelist;  
 }
 
 
@@ -613,6 +684,11 @@ sub resolve_dependencies
 
 
 
+
+
+
+
+
 sub process_exit_code
 {
     my $this = shift;
@@ -740,7 +816,7 @@ sub make_cleanfile
     
     foreach my $file (keys %outputs)
     {
-        print_e "$file " . $outputs{$file} . "\n";
+        print_e "$file " . $outputs{$file};
         print $fh_clean "    $outdir/$file \\\n";
         print $fh_cache "$file \n";
     }
@@ -767,7 +843,7 @@ sub recurse_if_necessary
     if($should)
     {
         print_n "At the end of parent process, recursing on make";
-        system( "make $outfile" );
+        #system( "make $outfile" );
     }
     else
     {
