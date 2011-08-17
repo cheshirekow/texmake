@@ -3,6 +3,7 @@
 use Switch;
 
 use Texmake::MakeMaker;
+use Texmake::Builder;
 use Texmake::Printer qw(print_w print_e print_f print_n);
 
 # first, make sure that we have at least one argument
@@ -21,6 +22,12 @@ switch($command)
     {
         my $init = Texmake::MakeMaker->new(@ARGV);
         $init->go();
+    }
+    
+    case "build"
+    {
+        my $builder = Texmake::Builder->new(@ARGV);
+        $builder->go();
     }
     
     default

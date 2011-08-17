@@ -80,7 +80,11 @@ sub check_for_cachefile()
         # now we're going to find the location of all the binaries and scripts that
         # we need, which will depend on the current path (this is so the user 
         # doesn't have to export a new path every time)
-        foreach my $name (qw(kpsewhich svg2pdf svg2eps convert directoryWatch))
+        foreach my $name ( qw( 
+            latex       pdflatex    latexml     kpsewhich 
+            bibtex      find        
+            svg2pdf     svg2eps     convert     directoryWatch
+            ))
         {
             find_software(\@failed,$fh_cache,$name);
         }
