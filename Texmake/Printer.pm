@@ -74,5 +74,4 @@ sub _print
 
 
 1;
-__END__
 

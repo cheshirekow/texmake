@@ -21,3 +21,6 @@ sub DESTROY
 {
     $Texmake::Printer::tab =~ s/$inc//;
 }
+
+
+1;

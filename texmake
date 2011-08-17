@@ -1,308 +1,44 @@
 #!/usr/bin/perl
 
+use Switch;
 
-use Cwd;
-use Cwd 'abs_path';
-
-
+use Texmake::MakeMaker;
+use Texmake::Printer qw(print_w print_e print_f print_n);
 
 # first, make sure that we have at least one argument
-if(length(@ARGV) < 1)
+if( ($#ARGV + 1) < 1)
 {
-    print "usage: texmake projectroot/";
+    print_f "Not enough arguments";
+    print_help();
     die;
 }
 
-# next, check to see if we've already built a cache file, and if so, add all
-# the variables from it
-if( -e "./texmake.cache" )
-{
-    print "Found texmake cache\n";
-}
+$command = shift(@ARGV);
 
-# if there is no cache file then we need to make one
-else
+switch($command)
 {
-    my @failed;
-    my $bin;
-    
-    open CACHE, ">texmake.cache";
-    
-    # now we're going to find the location of all the binaries and scripts that
-    # we need, which will depend on the current path (this is so the user 
-    # doesn't have to export a new path every time)
-    $bin = `which kpsewhich`;
-    chomp($bin);
-    print CACHE "\$kpsewhich=  \"" . $bin . "\";\n";
-    push(@failed, "kpsewhich") if(${^CHILD_ERROR_NATIVE} != 0);
-    
-    $bin = `which svg2pdf`;
-    chomp($bin);
-    print CACHE "\$svg2pdf=    \"" . $bin   . "\";\n";
-    push(@failed, "svg2pdf") if(${^CHILD_ERROR_NATIVE} != 0);
-    
-    $bin = `which svg2eps`;
-    chomp($bin);
-    print CACHE "\$svg2eps=    \"" . $bin   . "\";\n";
-    push(@failed, "svg2eps") if(${^CHILD_ERROR_NATIVE} != 0);
-
-    $bin = `which convert`;
-    chomp($bin);
-    print CACHE "\$convert=    \"" . $bin   . "\";\n";
-    push(@failed, "convert") if(${^CHILD_ERROR_NATIVE} != 0);
-    
-    $bin = abs_path($0);
-    chomp($bin);
-    print CACHE "\$texmake=    \"" . $bin   . "\";\n";
-    
-    $bin=~/^(.+)\/([^\/]+)$/;
-    print CACHE "\$texmakedep= \"$1/texmakedep\";\n";
-    print CACHE "\$texmakebuild=\"$1/texmakebuild\";\n";
-    
-    $bin = `which directoryWatch`;
-    chomp($bin);
-    print CACHE "\$dirwatch=   \"" . $bin . "\";\n";
-    push(@failed, "directoryWatch") if(${^CHILD_ERROR_NATIVE} != 0);
-    
-    print CACHE "\n\n1;";
-    
-    close CACHE;
-    
-    if($#failed >= 0)
+    case "init"
     {
-        print "Failed to find the following binaries: \n";
-        foreach $fail (@failed)
-        {
-            print "$fail\n";
-        }
+        my $init = Texmake::MakeMaker->new(@ARGV);
+        $init->go();
+    }
+    
+    default
+    {
+        print_f "Unrecognized command $command";
+        print_help();
     }
 }
 
-require "texmake.cache";
 
-my $pwd = getcwd;
-my $src = abs_path($ARGV[0]);
 
-my @makefiles;
-my @makefiles_store;
-push(@makefiles,$ARGV[0]);
-
-my %builds;
-
-# now look for the texmakefiles
-while( ($#makefiles + 1) > 0 )
+sub print_help
 {
-    my $makefile = pop @makefiles;
-    $makefile .= "/texmakefile";
-    
-    push(@makefiles_store, "$src/$makefile");
-    
-    if(-e $makefile)
-    {
-        print "[STATUS] processing $makefile\n";
-        open MAKEFILE, $makefile;
-        
-        while(<MAKEFILE>)
-        {
-            chomp;
-            
-            # skip lines starting with the comment characters
-            next if( /^\s*#/ );
-            next if( /^\s*%/ );
-            
-            # skip blank lines
-            next if( /^\s*$/ );
-            
-            # append children to the search list
-            if( /^\s*\+(.+)$/ )
-            {
-                $makefile = $ARGV[0] . "/$1";
-                print "[STATUS]    Appending $makefile to the list\n";
-                push(@makefiles, $makefile);
-            }
-            
-            # process the rule
-            elsif( /([^:]+):(.+)/ )
-            {
-                my $root      = $1;
-                my @outputs   = split /\s+/, $2;
-                
-                if( exists $builds{$root} )
-                {
-                    $ref = $builds{$root};
-                    push(@$ref, @outputs);
-                }
-                else
-                {
-                    $builds{$root} = \@outputs;
-                }
-            }
-            
-            else
-            {
-                print "[WARNING]    unrecognized rule $_\n";
-            }
-        }
-        
-        close MAKEFILE;        
-    }
-    
-    else
-    {
-        print "[WARNING]: missing $makefile\n"
-    }
-}
+    print_e <<END;
+usage: $0 [command] [args]
 
-open ROOTDEPEND, ">roots.d.d" or die "Failed to open ./roots.d.d $!\n";
-print ROOTDEPEND "roots.d: \\\n";
-
-foreach $makefile (@makefiles_store)
-{
-	print ROOTDEPEND "   $makefile \\\n";
-}
-
-print ROOTDEPEND "\n";
-print ROOTDEPEND "\t\$(TEXMAKE) \$<\n\n";
-close ROOTDEPEND;
-
-
-
-my @all;
-my @clean;
-
-open ROOTDEPEND, ">roots.d" or die "Failed to open ./roots.d $!\n";
-
-# the first rule needs to be "all" so that make without rules turns into make
-# with all
-
-print ROOTDEPEND <<END;
-# Note that the include files are only included if they exist. They will be
-# generated automatically by texmakebuild if they do not already exist, and if
-# they don't exist they don't need to be included because it is already clear
-# that the output needs to be generated
-# likewise the clean rules don't need to be included if they don't exist,
-# because there is no output to clean
+COMMANDS
+    init    initialize the texmake build directory and creates the makefile
+    build   builds 
 END
-print ROOTDEPEND "all: \n\n";
-
-print "[STATUS] processing rules\n";
-foreach my $root (keys %builds)
-{
-	print "[STATUS]   for root $key\n";
-	$ref = $builds{$root};
-    
-    foreach my $output(@$ref)
-    {
-    	# skip empty entries
-    	next if( $output =~ /^\s*$/ );
-    	
-    	print "[STATUS]      for output $output\n";
-    	
-    	my $path;
-    	my $file;
-    	if( $output =~ /(.+)\/([^\/]+)/ )
-    	{
-    		$path =  "$pwd/" . $1;
-    		$file = $2;
-    	}
-    	else
-    	{
-    		$path = "$pwd/";
-    		$file = $output;
-    	}
-    	
-    	`mkdir -p $path` unless ( -e $path );
-    	
-    	print ROOTDEPEND <<END;
-$path/$file : $src/$root
--include $path/$file.d
--include $path/clean_$file.d
-END
-
-    	
-    	push(@all,"$path/$file");
-    	push(@clean,"$path/$file","$path/$file.d");
-    }    	
 }
-
-print ROOTDEPEND "\n\n";
-print ROOTDEPEND "all : \\\n";
-foreach my $output ( @all )
-{
-	print ROOTDEPEND "    $output \\\n";
-}
-
-close ROOTDEPEND;
-
-open MAKEFILE, ">makefile" or die "Failed to open makefile $!\n";
-
-print MAKEFILE <<END;
-
-SVG2PDF := $svg2pdf
-SVG2EPS := $svg2eps
-CONVERT := $convert
-TEXMAKE := $texmake
-MAKEDEP := $texmakedep
-TEXBUILD:= $texmakebuild
-
-END
-
-print MAKEFILE <<'END';
-PWD         := $(shell pwd)
-
-
-# rules for when we need to rebuild the root dependencies (and this makefile)
-include roots.d.d
-
-# top level dependency rules for each document, also includes individual
-#dependency files
-include roots.d
-
-%.eps : 
-	@echo "Converting $(subst $(PWD),,$@)"
-	@$(SVG2EPS) $< $@ 
-	
-%.png :
-	@echo "Converting $(subst $(PWD),,$@)"
-	@$(CONVERT) $< $@
-	
-%.pdf : 
-	@echo "Converting $(subst $(PWD),,$@)"
-	@$(SVG2PDF) $< $@
-
-%.dvi : 
-	@echo "Converting $(subst $(PWD),,$@)"
-	${TEXBUILD} $@ $< $(filter *.bib, $^)
-
-%.pdf : %.pdf.d
-	@echo "Building $(subst $(PWD),,$@)"
-	${TEXBUILD} $@ $< $(filter *.bib, $^)
-
-%.xhtml: %.xhtml.d
-	@echo "Bulding Root Document $*_xhtml.tex"
-	cat $(SOURCE_DIR)/conditionals.tex > $*_xhtml.tex
-	echo "\xhtmloutputtrue" >> $*_xhtml.tex
-	echo "" >> $*_xhtml.tex
-	cat $(word 2,$^) >> $*_xhtml.tex
-	@echo "Running latexml on $*_xhtml.tex"
-	@latexml $*_xhtml.tex --path=xhtml/ --path=$(SOURCE_DIR) --dest=$*.xml > $*.xml.log 2>&1
-	@BIBSTRING=""; \
-	BIB="$(filter *.bib, $^)"; \
-	for BIBFILE in $$BIB; do \
-	    echo "Running latexml on $$BIBFILE"; \
-	    XMLFILE=`basename "$$BIBFILE" .bib`.xml; \
-	    LOGFILE=`basename "$$BIBFILE" .bib`.xml.log; \
-	    latexml $$BIBFILE --dest=$$XMLFILE > $$LOGFILE 2>&1; \
-	    BIBSTRING="$$BIBSTRING --bibliography=$$XMLFILE"; \
-	done; \
-	echo $$BIBSTRING > bibstring.txt
-	@echo "postprocessing with `cat bibstring.txt`"
-	@latexmlpost $*.xml `cat bibstring.txt` --dest=$@ --css=navbar-left.css
-
-clean:
-	@rm -rvf $^
-
-END
-
-close MAKEFILE; 
-
