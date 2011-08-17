@@ -171,12 +171,13 @@ sub find_texmakefiles
     {
         my $dir         = pop @directories;
         my $rel_path    = "$dir/texmakefile";
+        my $abs_dir     = "$src/$dir";
         my $abs_path    = "$src/$dir/texmakefile";
         
         if(-e $abs_path)
         {
             print_n "processing $rel_path ";
-            push(@processed, "$abs_path");
+            push(@processed, "$abs_dir");
 
             my $fh;
             unless ( open ($fh, '<', "$abs_path") )

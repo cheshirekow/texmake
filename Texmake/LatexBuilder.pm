@@ -47,7 +47,7 @@ sub new()
     {
         'latex' => 1,
         'bibtex'=> 0
-    }
+    };
     
     # this flag gets set to true if we need to recurse on make becuase latex
     # failed due to missing graphics files that we now know about
@@ -70,8 +70,8 @@ sub go()
     my $this = shift;
     $this->fork_watcher();
     
-    $texflag = \$this->{'do'}->{'latex'};
-    $bibflag = \$this->{'do'}->{'bibtex'};
+    my $texflag = \$this->{'do'}->{'latex'};
+    my $bibflag = \$this->{'do'}->{'bibtex'};
     
     # after running latex, we may need to run it again so we'll run until
     # the flag gets turned off
@@ -137,7 +137,7 @@ sub fork_watcher()
 
         # the parent process returns from this method back to the go()
         print_n "parent got the signal, returning to go()";
-        $this->{'fh_watch'}     = $fh_watch;
+        $this->{'fh_watch'}     = $fh_fromwatch;
         $this->{'pid_watch'}    = $pid_watch;
         return;
     }
@@ -172,8 +172,8 @@ sub watch_child
     # process group of this process
     setpgrp(0,0);
     
-    $outdir     = $this->{'out'}->{'dir'};
-    $dirwatch   = $this->{'catch'}->{'directoryWatch'};
+    my $outdir     = $this->{'out'}->{'dir'};
+    my $dirwatch   = $this->{'catch'}->{'directoryWatch'};
     
     print_n "forked watcher to observe $outdir with $dirwatch";
     
@@ -189,7 +189,7 @@ sub kill_watcher
     
     # now that the builder is done we can stop the watcher
     print_n "Killing watcher $pid_watch";
-    my $result = killfam SIGINT, $pid_watch;
+    my $result = killfam "SIGINT", $pid_watch;
     
     print_n "Successfully passed signal to $result children";
     print_n "Waiting for watcher to stop";
@@ -203,10 +203,10 @@ sub run_latex
 {
     my $this    = shift;
     
-    $srcdir = $this->{'src'}->{'dir'};
-    $outdir = $this->{'out'}->{'dir'};
-    $outjob = $this->{'out'}->{'job'};
-    $outext = $this->{'out'}->{'ext'};
+    my $srcdir = $this->{'src'}->{'dir'};
+    my $outdir = $this->{'out'}->{'dir'};
+    my $outjob = $this->{'out'}->{'job'};
+    my $outext = $this->{'out'}->{'ext'};
     
     my $rootfile    = "$outjob\_$outext.tex";
     
@@ -216,38 +216,7 @@ sub run_latex
     
     my @missing;    # a list of all missing files
     my @filelist;   # a list of all files
-    
-    
-    
-    
-    
-    
     my $fh;
-    
-    # if the cachefile for depencies exists, then load all the cached resolved
-    # dependencies into the hash
-    if( -e $depcache )
-    {
-        unless ( open ($fh, '<', $depcache) )
-        {
-            print_f "Failed to open cachefile: $depcache $!";
-            die;
-        }
-        
-        while(<$fh>)
-        {
-            chomp;
-            if(/([^:\s]+)\s*:\s*([^:\s]+)/)
-            {
-                $depends{$1} = $2;
-            }
-            else
-            {
-                print_w "bad cachefile entry: $_";
-            }
-        }
-        close $fh;
-    }
     
     # this is the command we'll pass to the shell to spawn the latex process
     my $cmd = <<END;
@@ -279,7 +248,7 @@ END
             # the file list ends with a line of astrices (*******)
             if(/^\s*\*+\s*$/)
             {
-                $filelist=0;
+                $atFilelist=0;
                 next;
             }
             
@@ -308,7 +277,7 @@ END
             # lines compose a list of loaded files
             elsif(/^\s*\*File List\*\s*$/)
             {
-                $filelist=1;
+                $atFilelist=1;
                 next;
             }
             
@@ -384,19 +353,30 @@ sub resolve_dependencies
     # graphic file but that we know how to build it
     my $isMissingGraphic    = 0;
     
-    my %cached;     # previously resolved dependencies
+    my %cache;      # previously resolved dependencies
     my %depends;    # dependencies mapping to their full path
     my %path;       # maps file extensions to their kpsewhich path
     my %ignore;     # file extensions for which we will not resolve a path
     
     my @graphics;   # array of graphics included   
     
+    my $resolved;   # temporary for resolved names
+    
     my $fh_dep;     # file handle for the dependency file
     my $fh_cache;   # file handle for the cache file
     
+    my $kpsewhich   = $this->{'cache'}->{'kpsewhich'};
+    my $find        = $this->{'cache'}->{'find'};
+    my $latex       = $this->{'cache'}->{'latex'};
+    
+    if($this->{'out'}->{'ext'} == "pdf")
+    {
+        $latex = $this->{'cache'}->{'pdflatex'};
+    }
+    
     # iterate over file extensions we expect we might need to search for, and
     # add to the search path the output directory and the source directory
-    foreach $ext ( qw(sty cls tex bib cnf clo def fd) )
+    foreach my $ext ( qw(sty cls tex bib cnf clo def fd) )
     {
         $path{$ext} = "$outdir:$srcdir:".
                         `$kpsewhich -progname $latex -show-path .$ext`;
@@ -405,7 +385,7 @@ sub resolve_dependencies
     
     # iterate over file extensions we explicitly want to exclude from the 
     # dependency list
-    foreach $ext( qw(cfg mkii out) )
+    foreach my $ext( qw(cfg mkii out) )
     {
         $ignore{$ext} = 1;
     }
@@ -427,7 +407,7 @@ sub resolve_dependencies
             # cached dependencies should be in the form of name : abs_path
             if(/^([^:\s]+)\s*:\s*([\s]+)/)
             {
-                $cached{$1} = $2;
+                $cache{$1} = $2;
             }
             
             else
@@ -523,7 +503,7 @@ sub resolve_dependencies
             # been resolved, meaning it should be in the missing file list
             unless( defined($cache{$file}) )
             {
-                print_f "cannot find graphics $file in the cache, even though latex found it"
+                print_f "cannot find graphics $file in the cache, even though latex found it";
                 die;
             }
             
@@ -550,14 +530,14 @@ sub resolve_dependencies
         {
             $isMissingGraphic = 1;
             push (@graphics,$file);
-            print $fh_depend "   $outdir/$file.$fig \\\n";
+            print $fh_dep "   $outdir/$file.$fig \\\n";
         }
     }
     
     
     # now we're done printing the dependency list for the actual output, so 
     # we need to insert some space before the graphics rules are added
-    print $fh_depend "\n\n";
+    print $fh_dep "\n\n";
     
     # now we iterate over all of the graphics files that are required by this
     # output and we create rules for how to build them
@@ -644,14 +624,14 @@ sub process_exit_code
     {
         print_n "Build failed but we found ".
                 "missing graphics files so we'll recurse make";
-        $this->{'recurse'} = true;
+        $this->{'recurse'} = 1;
     }
     
     elsif($exitcode)
     {
         print_f "Build failed but we didn't find missing graphics files ".
                 "so the only thing we can do is fail";
-        $this->{'fail'} = true;
+        $this->{'fail'} = 1;
     }
     
     else
@@ -673,7 +653,8 @@ sub make_cleanfile
     
     my $cleanfile   = "$outdir/clean_$outjob.$outext.d";
     my $cleancache  = "$outdir/clean_$outjob.$outext.cache";
-    my $touchfile   = "$toudir/touchlist.txt";
+    my $touchfile   = "$outdir/touchlist.txt";
+    my $rootfile    = "$outdir/$outjob\_$outext.tex";
     
     # note that we'll use a hash for output files so that we can easily 
     # eliminate repeats
@@ -715,8 +696,8 @@ sub make_cleanfile
         # if the touchfile has a known notification then process it
         if( /([^,]+),(.+)/ )
         {
-            $file   = $1;
-            $notify = $2;
+            my $file   = $1;
+            my $notify = $2;
             
             # if the notification is one of the ones that indicate a write, then
             # record the file as an output

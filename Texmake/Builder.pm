@@ -59,7 +59,7 @@ sub new()
     }
     else
     {
-        print_f "Improper usage of $0 build "
+        print_f "Improper usage of $0 build ";
         print_e "usage: $0 build output.[dvi|pdf|xhtml] source.tex [bibfiles]";
         die;
     }
@@ -248,6 +248,7 @@ sub create_rootfile()
     # create the root file for this document build
     my $this    = shift;
     my $cmd     = shift;
+    my $srcfile = $this->{'src'}->{'file'};
     my $outdir  = $this->{'out'}->{'dir'};
     my $outjob  = $this->{'out'}->{'job'};
     my $outext  = $this->{'out'}->{'ext'};
@@ -293,19 +294,19 @@ sub dispatch
  
     switch($this->{'out'}->{'ext'})
     {
-        case "pdf"
+        case "pdf" { next }
         case "dvi"
         {
             $builder = Texmake::LatexBuilder->new($this);
         }
         
-        case "html"
+        case "html" { next }
         case "xhtml"
         {
             $builder = Texmake::LatexmlBuilder->new($this);
         }
 
-        default 
+        else
         {
             print_f
             die "unknown output extension $_";
