@@ -81,16 +81,16 @@ sub go()
     
     # after running latex, we may need to run it again so we'll run until
     # the flag gets turned off
-    print "Running latex (1)\n";
+    print_n 0, "Running latex (1)";
     $this->run_latex();
-    print_n "Bibtex do flag: " . $$bibflag;
+    print_n 1, "Bibtex do flag: " . $$bibflag;
     
     $this->resolve_dependencies();
     
-    print_n "Bibtex do flag: " . $$bibflag;
+    print_n 1, "Bibtex do flag: " . $$bibflag;
     if( $$bibflag )
     {
-        print "Running bibtex\n";
+        print_n 0, "Running bibtex";
         $this->run_bibtex();
         $this->resolve_bib_dependencies();
         $$texflag = 1;
@@ -99,7 +99,7 @@ sub go()
     my $i = 2;
     while($$texflag)
     {
-        print "Running latex ($i)\n";
+        print_n 0, "Running latex ($i)";
         $this->run_latex();
         $this->resolve_dependencies();    
         $i++;
@@ -246,7 +246,7 @@ export TEXINPUTS=".:$outdir:$srcdir:" \\
         $outjob\_$outext.tex 2>&1
 END
 
-    print_n "Build command:\n $cmd ";
+    print_n 1, "Build command:\n $cmd ";
     
     # now we spawn the builder in a child process and pipe the output back
     # to this process
@@ -331,21 +331,21 @@ END
     
     $latexreturn = ${^CHILD_ERROR_NATIVE};
     
-    print_n "Latex return code: $latexreturn";
+    print_n 1, "Latex return code: $latexreturn";
     
     print_n "Missing files:\n--------------------------";
     foreach (@missing)
     {
         print_e $_;
     }
-    print "\n";
+    print_e "";
     
     print_n "File list:\n------------------------";
     foreach (@filelist)
     {
         print_e $_;
     }
-    print "\n";
+    print_e "";
  
     $this->{'latex_exit'}    = $latexreturn;   
     $this->{'missing_files'} = \@missing;
@@ -381,7 +381,7 @@ export BIBINPUTS=".:$outdir:$srcdir:" \\
     && $bibtex  $auxfile 2>&1
 END
 
-    print_n "Bibtex command:\n $cmd ";
+    print_n 1, "Bibtex command:\n $cmd ";
     
     # now we spawn bibtex in a child process and pipe the output back
     # to this process

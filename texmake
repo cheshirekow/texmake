@@ -30,6 +30,12 @@ while(1)
     {
         case "-d"
         {
+            my $value = shift(@ARGV);
+            if($value=~/\D/)
+            {
+                unshift(@ARGV,$value);
+                $value = 1;
+            }
             Texmake::Printer->setDebug(1);
         }
         

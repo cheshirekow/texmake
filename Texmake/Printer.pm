@@ -34,42 +34,61 @@ our $VERSION = '0.01';
 our $tab    = "";
 my $ten     = "          ";
 my $debug   = 0;
+my $levelcache = 1;
 
 sub print_w
 {
-    print STDERR "[WARNING] $tab";
+    unshift(@_,0);
+    unshift(@_,"[WARNING] $tab");
     _print(@_);
 }
 
 sub print_f
 {
-    print STDERR "[FATAL]   $tab";
+    unshift(@_,0);
+    unshift(@_,"[FATAL]   $tab");
     _print(@_);
 }
 
 sub print_n
 {
-    if($debug)
-    {
-        print STDERR "[NOTICE]  $tab";
-        _print(@_);
-    }
+    unshift(@_,"[NOTICE]  $tab");
+    _print(@_);
 }
 
 sub print_e
 {
-    if($debug)
-    {
-        print STDERR "$ten$tab";
-        _print(@_);
-    }
+    unshift(@_,$levelcache);
+    unshift(@_,"$ten$tab");
+    _print(@_);  
 }
 
 
 
 sub _print
 {
-    my @array = @_;
+    my $prefix  = shift;
+
+    my $level   = shift;
+    
+    # if the first parameter passed to the public print method contains non
+    # numeric characters, then no level was provided
+    if($level=~/\D/)
+    {
+        unshift(@_,$level);
+        $level = 1;
+    }
+    
+    $levelcache = $level;
+    
+    # if the level passed to this method is a high level debugging message, 
+    # then don't print it
+    return if($level > $debug);
+    
+    # print the prefix
+    print STDERR $prefix;
+
+    my @array   = @_;
     foreach (@array)
     {
         s/\n/\n$ten$tab/g;
