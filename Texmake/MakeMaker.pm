@@ -406,15 +406,15 @@ include roots.d
 # rebuilt every invocation of make unless we make it depend on at least
 # something
 %.dvi : roots.d
-	@echo "Building $(subst $(PWD),,$@)" | ${COLOR} green
+	@echo "Building $(subst $(PWD),,$@)" | $(COLOR) green
 	@echo "( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 1>&3 | ${COLOR} red ) 3>&1 1>&2 | ${COLOR} yellow" >> make.log
-	@( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 1>&3 | ${COLOR} red ) 3>&1 1>&2 | ${COLOR} yellow 
+	@( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 1>&3 | ${COLOR} red ) 3>&1 1>&2 | $(COLOR) yellow 
 	@cp $*_dvi.dvi $@
 
 %.pdf : roots.d
-	@echo "Building $(subst $(PWD),,$@)"
+	@echo "Building $(subst $(PWD),,$@) | $(COLOR) green"
 	@echo "( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 1>&3 | ${COLOR} red ) 3>&1 1>&2 | ${COLOR} yellow" >> make.log
-	@( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 1>&3 | ${COLOR} red ) 3>&1 1>&2 | ${COLOR} yellow
+	@( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 1>&3 | ${COLOR} red ) 3>&1 1>&2 | $(COLOR) yellow
 	@cp $*_pdf.pdf $@
 
 %.xhtml: roots.d

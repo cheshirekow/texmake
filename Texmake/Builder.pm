@@ -291,16 +291,25 @@ sub dispatch
     
     my ($fig,$cmd);
     my $builder;
+    my $outext = $this->{'out'}->{'ext'};
  
-    switch($this->{'out'}->{'ext'})
+    switch($outext)
     {
-        case "pdf" { next }
+        case "pdf"
+        { 
+            $builder = Texmake::LatexBuilder->new($this);
+        }
+        
         case "dvi"
         {
             $builder = Texmake::LatexBuilder->new($this);
         }
         
-        case "html" { next }
+        case "html" 
+        { 
+            $builder = Texmake::LatexmlBuilder->new($this);
+        }
+        
         case "xhtml"
         {
             $builder = Texmake::LatexmlBuilder->new($this);
@@ -309,7 +318,7 @@ sub dispatch
         else
         {
             print_f
-            die "unknown output extension $_";
+            die "unknown output extension $outext";
         }            
     }   
     

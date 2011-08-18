@@ -240,7 +240,7 @@ sub run_latex
     # this is the command we'll pass to the shell to spawn the latex process
     my $cmd = <<END;
 export TEXINPUTS=".:$outdir:$srcdir:" \\
-    && $latex -draftmode \\
+    && $latex \\
         -interaction nonstopmode \\
         -output-directory $outdir \\
         $outjob\_$outext.tex 2>&1
@@ -681,7 +681,7 @@ sub resolve_dependencies
             {
                 chomp;
                 print $fh_dep   "$outdir/$file.$fig : $_\n";
-                print $fh_dep   "\t\@echo \"Generating figure $file.$fig\" | \$(COLOR} green \n";
+                print $fh_dep   "\t\@echo \"Generating figure $file.$fig\" | \$(COLOR) green \n";
                 print $fh_dep   figure_rule($fig,$_);
 
                 # TODO put the actual rule here depending on the source and 
@@ -745,7 +745,8 @@ sub figure_rule
             {
                 case "svg"
                 {
-                    return "\t\$(SVG2PDF) \$< \$@\n"
+                    return "\t\@ echo\"\$(SVG2PDF) \$< \$@\" >> make.log\n".
+                            "\t\@\$(SVG2PDF) \$< \$@\n"
                 }
                 
                 else
@@ -761,7 +762,8 @@ sub figure_rule
             {
                 case "svg"
                 {
-                    return "\t\$(SVG2EPS) \$< \$@\n";
+                    return "\t\@ echo\"\$(SVG2EPS) \$< \$@\" >> make.log\n".
+                            "\t\@\$(SVG2EPS) \$< \$@\n";
                 }
                 
                 else
@@ -773,7 +775,8 @@ sub figure_rule
         
         case "png"
         {
-            return "\t\$(CONVERT) \$< \$@\n";            
+            return  "\t\@ echo\"\$(CONVERT) \$< \$@\" >> make.log\n".
+                    "\t\@\$(CONVERT) \$< \$@\n";            
         }
         
         else
