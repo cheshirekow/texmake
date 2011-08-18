@@ -2,6 +2,7 @@
 
 use Switch;
 
+use Texmake::ColorFilter;
 use Texmake::Filter;
 use Texmake::Colorizer;
 use Texmake::MakeMaker;
@@ -73,6 +74,12 @@ switch($command)
     case "filter"
     {
         my $filter = Texmake::Filter->new(@ARGV);
+        $filter->go();
+    }
+    
+    case "color-filter"
+    {
+        my $filter = Texmake::ColorFilter->new(@ARGV);
         $filter->go();
     }
     
