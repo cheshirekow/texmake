@@ -960,14 +960,14 @@ sub process_exit_code
     
     if($exitcode && $isMissingGraphic)
     {
-        print_n "Build failed but we found ".
+        print_n 0, "Build failed but we found ".
                 "missing graphics files so we'll recurse make";
         $this->{'recurse'} = 1;
     }
     
     elsif($exitcode)
     {
-        print_f "Build failed but we didn't find missing graphics files ".
+        print_f 0, "Build failed but we didn't find missing graphics files ".
                 "so the only thing we can do is fail";
         $this->{'fail'} = 1;
     }
@@ -1032,6 +1032,9 @@ sub make_cleanfile
     {
         chomp;
         
+        # skip empty lines
+        next if(/^\s*$/);
+        
         # if the touchfile has a known notification then process it
         if( /([^,]+),(.+)/ )
         {
@@ -1073,24 +1076,36 @@ sub make_cleanfile
         die;
     }
     
-    print $fh_clean "clean: \\\n";
+    print $fh_clean <<END;
+clean: clean_$outfile
 
-    print_n "Touched files\n          ------------------------\n";
+clean_$outfile : 
+END
+
+    print_n 2, "Touched files\n          ------------------------\n";
     
     foreach my $file (keys %outputs)
     {
         print_e "$file " . $outputs{$file};
-        print $fh_clean "    $outdir/$file \\\n";
+        
+        if($file=~/\.[^.]+/)
+        {
+            print $fh_clean "\t\@rm -fv $outdir/$file \n";
+        }
+        else
+        {
+            print $fh_clean "\t\@rm -rfv $outdir/$file \n";
+        }
         print $fh_cache "$file \n";
     }
     
     print $fh_clean <<END;
-$cleanfile \\
-$cleancache \\
-$rootfile \\
-$touchfile \\
-$outfile
-
+	\@rm -fv $cleanfile 
+	\@rm -fv $cleancache 
+	\@rm -fv $rootfile 
+	\@rm -fv $touchfile 
+	\@rm -fv $outfile
+	
 END
 
     close $fh_clean;
@@ -1106,11 +1121,11 @@ sub recurse_if_necessary
     
     if($should)
     {
-        print_n "At the end of parent process, recursing on make";
-        #system( "make $outfile" );
+        print_n 0, "At the end of parent process, recursing on make";
+        system( "make $outfile" );
     }
     else
     {
-        print_n "At the end of parent process, no need to recurse";
+        print_n 0, "At the end of parent process, no need to recurse";
     }
 }
