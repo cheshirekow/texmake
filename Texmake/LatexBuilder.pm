@@ -745,7 +745,7 @@ sub figure_rule
             {
                 case "svg"
                 {
-                    return "\t\@ echo\"\$(SVG2PDF) \$< \$@\" >> make.log\n".
+                    return "\t\@ echo \"\$(SVG2PDF) \$< \$@\" >> make.log\n".
                             "\t\@\$(SVG2PDF) \$< \$@\n"
                 }
                 
@@ -762,7 +762,7 @@ sub figure_rule
             {
                 case "svg"
                 {
-                    return "\t\@ echo\"\$(SVG2EPS) \$< \$@\" >> make.log\n".
+                    return "\t\@ echo \"\$(SVG2EPS) \$< \$@\" >> make.log\n".
                             "\t\@\$(SVG2EPS) \$< \$@\n";
                 }
                 
@@ -775,7 +775,7 @@ sub figure_rule
         
         case "png"
         {
-            return  "\t\@ echo\"\$(CONVERT) \$< \$@\" >> make.log\n".
+            return  "\t\@ echo \"\$(CONVERT) \$< \$@\" >> make.log\n".
                     "\t\@\$(CONVERT) \$< \$@\n";            
         }
         

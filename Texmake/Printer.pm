@@ -31,8 +31,9 @@ our $VERSION = '0.01';
 
 
 
-our $tab = "";
-my $ten = "          ";
+our $tab    = "";
+my $ten     = "          ";
+my $debug   = 0;
 
 sub print_w
 {
@@ -48,14 +49,20 @@ sub print_f
 
 sub print_n
 {
-    print STDERR "[NOTICE]  $tab";
-    _print(@_);
+    if($debug)
+    {
+        print STDERR "[NOTICE]  $tab";
+        _print(@_);
+    }
 }
 
 sub print_e
 {
-    print STDERR "$ten$tab";
-    _print(@_);
+    if($debug)
+    {
+        print STDERR "$ten$tab";
+        _print(@_);
+    }
 }
 
 
@@ -69,6 +76,15 @@ sub _print
         print STDERR $_;
     }
     print STDERR "\n";
+}
+
+sub setDebug
+{
+    # shift off the class name
+    shift;
+    
+    my $value = shift;
+    $debug = $value;
 }
 
 

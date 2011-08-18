@@ -16,7 +16,33 @@ if( ($#ARGV + 1) < 1)
     die;
 }
 
-$command = shift(@ARGV);
+while(1)
+{
+    my $flag = shift(@ARGV);
+    
+    unless($flag=~/^-/)
+    {
+        $command = $flag;
+        last;    
+    }
+    
+    switch($flag)
+    {
+        case "-d"
+        {
+            Texmake::Printer->setDebug(1);
+        }
+        
+        else
+        {
+            print_w "Unrecognized flag $flag";
+        }
+    }
+    
+    
+         
+}
+
 
 switch($command)
 {
