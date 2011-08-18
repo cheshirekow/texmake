@@ -2,6 +2,7 @@
 
 use Switch;
 
+use Texmake::Filter;
 use Texmake::Colorizer;
 use Texmake::MakeMaker;
 use Texmake::Builder;
@@ -35,6 +36,12 @@ switch($command)
     {
         my $colorizer = Texmake::Colorizer->new(@ARGV);
         $colorizer->go();
+    }
+    
+    case "filter"
+    {
+        my $filter = Texmake::Filter->new(@ARGV);
+        $filter->go();
     }
     
     default
