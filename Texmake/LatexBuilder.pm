@@ -681,6 +681,8 @@ sub resolve_dependencies
             {
                 chomp;
                 print $fh_dep   "$outdir/$file.$fig : $_\n";
+                print $fh_dep   "\t\@echo \"Generating figure $file.$fig\" | \$(COLOR} green \n";
+                print $fh_dep   figure_rule($fig,$_);
 
                 # TODO put the actual rule here depending on the source and 
                 # output file type
@@ -720,6 +722,69 @@ END
 }
 
 
+
+
+sub figure_rule
+{
+    my $outext = shift;
+    my $infile = shift;
+    
+    unless($infile=~/(.+)\.([^\.]+)$/)
+    {
+        print_w "Cannot determine extension of figure $infile";
+        return "\n";
+    }
+    
+    my $inext = $2;
+    
+    switch($outext)
+    {
+        case "pdf"
+        {
+            switch($inext)
+            {
+                case "svg"
+                {
+                    return "\t\$(SVG2PDF) \$< \$@\n"
+                }
+                
+                else
+                {
+                    print_w "unrecognized figure input $infile for output $outext";                
+                }
+            }
+        }
+        
+        case "eps"
+        {
+            switch($inext)
+            {
+                case "svg"
+                {
+                    return "\t\$(SVG2EPS) \$< \$@\n";
+                }
+                
+                else
+                {
+                    print_w "unrecognized figure input $infile for output $outext";                
+                }
+            }
+        }
+        
+        case "png"
+        {
+            return "\t\$(CONVERT) \$< \$@\n";            
+        }
+        
+        else
+        {
+            print_w "unrecognized figure output $outext";
+        }
+        
+    }
+    
+    return "\@echo \"Warning: no rule defined\" | \$(COLOR) yellow \n";
+}
 
 
 sub resolve_bib_dependencies

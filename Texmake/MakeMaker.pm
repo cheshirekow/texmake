@@ -401,18 +401,6 @@ include roots.d.d
 #dependency files
 include roots.d
 
-%.eps : 
-	@echo "Converting $(subst $(PWD),,$@)"
-	@$(SVG2EPS) $< $@ 
-
-%.png :
-	@echo "Converting $(subst $(PWD),,$@)"
-	@$(CONVERT) $< $@
-	
-%.pdf : 
-	@echo "Converting $(subst $(PWD),,$@)"
-	@$(SVG2PDF) $< $@
-	
 # even though we have a dependency list for specific .dvi files included, 
 # since there is no dependency in this particular rule, the file will be 
 # rebuilt every invocation of make unless we make it depend on at least
