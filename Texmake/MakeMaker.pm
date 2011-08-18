@@ -82,7 +82,7 @@ sub check_for_cachefile()
         # doesn't have to export a new path every time)
         foreach my $name ( qw( 
             latex       pdflatex    latexml     kpsewhich 
-            bibtex      find        
+            bibtex      find        tee
             svg2pdf     svg2eps     convert     directoryWatch
             ))
         {
@@ -375,6 +375,7 @@ sub write_makefile
     my $svg2eps = $cache{'svg2eps'};
     my $convert = $cache{'convert'};
     my $texmake = $cache{'texmake'};
+    my $tee     = $cache{'tee'};
 
     print $fh <<END;
 SVG2PDF := $svg2pdf
@@ -382,11 +383,15 @@ SVG2EPS := $svg2eps
 CONVERT := $convert
 TEXMAKE := $texmake
 TEXBUILD:= $texmake build
+COLOR   := $texmake color
+TEE     := $tee
     
 END
     
     print $fh <<'END';
-PWD         := $(shell pwd)
+PWD     := $(shell pwd)
+
+all : 
 
 
 # rules for when we need to rebuild the root dependencies (and this makefile)
@@ -413,15 +418,16 @@ include roots.d
 # rebuilt every invocation of make unless we make it depend on at least
 # something
 %.dvi : roots.d
-	@echo "Building $(subst $(PWD),,$@)"
-	@echo "Older dependencies are: $?"
-	${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^)
-	mv $*_dvi.dvi $@
+	@echo "Building $(subst $(PWD),,$@)" | ${COLOR} green
+	@echo "( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 1>&3 | ${COLOR} red ) 3>&1 1>&2 | ${COLOR} yellow" >> make.log
+	@( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 1>&3 | ${COLOR} red ) 3>&1 1>&2 | ${COLOR} yellow 
+	@cp $*_dvi.dvi $@
 
 %.pdf : roots.d
 	@echo "Building $(subst $(PWD),,$@)"
-	${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^)
-	mv $*_pdf.pdf $@
+	@echo "( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 1>&3 | ${COLOR} red ) 3>&1 1>&2 | ${COLOR} yellow" >> make.log
+	@( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 1>&3 | ${COLOR} red ) 3>&1 1>&2 | ${COLOR} yellow
+	@cp $*_pdf.pdf $@
 
 %.xhtml: roots.d
 	@echo "Bulding Root Document $*_xhtml.tex"
