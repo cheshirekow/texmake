@@ -700,7 +700,8 @@ sub resolve_dependencies
     if($usesBibtex)
     {
         print $fh_dep <<END;
--include $outdir/$outjob\_$outext.bbl     
+
+-include $outdir/$outjob\_$outext.bbl.d
 END
     }
 

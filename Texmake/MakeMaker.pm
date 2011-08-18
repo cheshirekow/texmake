@@ -408,15 +408,22 @@ include roots.d
 	@echo "Converting $(subst $(PWD),,$@)"
 	@$(SVG2PDF) $< $@
 	
-%.dvi : 
+# even though we have a dependency list for specific .dvi files included, 
+# since there is no dependency in this particular rule, the file will be 
+# rebuilt every invocation of make unless we make it depend on at least
+# something
+%.dvi : roots.d
 	@echo "Building $(subst $(PWD),,$@)"
-	${TEXBUILD} $@ $< $(filter *.bib, $^)
+	@echo "Older dependencies are: $?"
+	${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^)
+	mv $*_dvi.dvi $@
 
-%.pdf : %.pdf.d
+%.pdf : roots.d
 	@echo "Building $(subst $(PWD),,$@)"
-	${TEXBUILD} $@ $< $(filter *.bib, $^)
+	${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^)
+	mv $*_pdf.pdf $@
 
-%.xhtml: %.xhtml.d
+%.xhtml: roots.d
 	@echo "Bulding Root Document $*_xhtml.tex"
 	cat $(SOURCE_DIR)/conditionals.tex > $*_xhtml.tex
 	echo "\xhtmloutputtrue" >> $*_xhtml.tex
