@@ -985,6 +985,7 @@ sub make_cleanfile
     my $outdir = $this->{'out'}->{'dir'};
     my $outjob = $this->{'out'}->{'job'};
     my $outext = $this->{'out'}->{'ext'};
+    my $outfile= $this->{'out'}->{'file'};
     
     my $cleanfile   = "$outdir/clean_$outjob.$outext.d";
     my $cleancache  = "$outdir/clean_$outjob.$outext.cache";
@@ -1084,7 +1085,8 @@ sub make_cleanfile
 $cleanfile \\
 $cleancache \\
 $rootfile \\
-$touchfile
+$touchfile \\
+$outfile
 
 END
 
