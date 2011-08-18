@@ -2,6 +2,7 @@
 
 use Switch;
 
+use Texmake::Colorizer;
 use Texmake::MakeMaker;
 use Texmake::Builder;
 use Texmake::Printer qw(print_w print_e print_f print_n);
@@ -30,6 +31,12 @@ switch($command)
         $builder->go();
     }
     
+    case "color"
+    {
+        my $colorizer = Texmake::Colorizer->new(@ARGV);
+        $colorizer->go();
+    }
+    
     default
     {
         print_f "Unrecognized command $command";
@@ -46,6 +53,7 @@ usage: $0 [command] [args]
 
 COMMANDS
     init    initialize the texmake build directory and creates the makefile
-    build   builds 
+    build   builds the specified file
+    color   colorizes output 
 END
 }
