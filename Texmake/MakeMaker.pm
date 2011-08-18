@@ -382,8 +382,9 @@ SVG2PDF := $svg2pdf
 SVG2EPS := $svg2eps
 CONVERT := $convert
 TEXMAKE := $texmake
-TEXBUILD:= $texmake build
-COLOR   := $texmake color
+TEXBUILD:= \$(TEXMAKE) build
+COLOR   := \$(TEXMAKE) color
+COLORIZE:= \$(TEXMAKE) color-filter "^\[WARNING\]" yellow "^\[FATAL\]" red "." cyan
 TEE     := $tee
     
 END
@@ -407,14 +408,14 @@ include roots.d
 # something
 %.dvi : roots.d
 	@echo "Building $(subst $(PWD),,$@)" | $(COLOR) green
-	@echo "( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 1>&3 | ${COLOR} red ) 3>&1 1>&2 | ${COLOR} yellow" >> make.log
-	@( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 1>&3 | ${COLOR} red ) 3>&1 1>&2 | $(COLOR) yellow 
+	@echo "( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) " >> make.log
+	@${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 | $(COLORIZE)
 	@cp $*_dvi.dvi $@
 
 %.pdf : roots.d
 	@echo "Building $(subst $(PWD),,$@)" | $(COLOR) green
-	@echo "( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 1>&3 | ${COLOR} red ) 3>&1 1>&2 | ${COLOR} yellow" >> make.log
-	@( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 1>&3 | ${COLOR} red ) 3>&1 1>&2 | $(COLOR) yellow
+	@echo "( ${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) " >> make.log
+	@${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 | $(COLORIZE)
 	@cp $*_pdf.pdf $@
 
 %.xhtml: roots.d
