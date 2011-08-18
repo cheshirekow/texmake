@@ -81,20 +81,28 @@ sub go()
     
     # after running latex, we may need to run it again so we'll run until
     # the flag gets turned off
+    print "Running latex (1)\n";
     $this->run_latex();
+    print_n "Bibtex do flag: " . $$bibflag;
+    
     $this->resolve_dependencies();
     
+    print_n "Bibtex do flag: " . $$bibflag;
     if( $$bibflag )
     {
+        print "Running bibtex\n";
         $this->run_bibtex();
         $this->resolve_bib_dependencies();
         $$texflag = 1;
     }
     
+    my $i = 2;
     while($$texflag)
     {
+        print "Running latex ($i)\n";
         $this->run_latex();
         $this->resolve_dependencies();    
+        $i++;
     }
     
     $this->process_exit_code();
@@ -306,13 +314,15 @@ END
             elsif(/No file (.+)\.bbl/)
             {
                 $this->{'do'}->{'bibtex'} = 1;
+                print_n "Found missing .bbl file, need to run bibtex";
             }
             
             # if this regex matches, then latex is telling us to rerun to 
             # get cross references correct
             elsif(/Rerun/)
             {
-                
+                $this->{'do'}->{'latex'} = 1;
+                print_n "Found rerun suggestion";
             }
         }
     }
@@ -635,7 +645,7 @@ sub resolve_dependencies
             # we need to create it
             unless (-e $dir)
             {
-                print_n "making output directory $dir\n";
+                print_n "making output directory $dir";
                 unless( make_path($dir) )
                 {
                     print_f "Failed to make directory $dir $!";
@@ -699,7 +709,13 @@ END
     close $fh_cache;
     
     $this->{'is_missing_graphic'}   = $isMissingGraphic;
-    $this->{'do'}->{'bibtex'}       = $usesBibtex;
+    
+    # we cannot just set the do flag to usesBibtex because if this is the first
+    # time we run bibtex then the .bbl file wont be among the missing
+    if($usesBibtex)
+    {
+        $this->{'do'}->{'bibtex'}       = $usesBibtex;
+    }
 }
 
 
@@ -854,7 +870,7 @@ sub resolve_bib_dependencies
     # now we're done printing the dependency list for the actual output, so 
     # we need to insert some space before the graphics rules are added
     print $fh_dep "\n";
-    print $fh_dep "\t\$(TEXBUILD) \$@\n\n";
+    print $fh_dep "\t\$(TEXBUILD) $outdir/$outjob.$outext \n\n";
     
     # now we're all done building the dependency and cachefiles    
     close $fh_dep;

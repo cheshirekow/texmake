@@ -199,7 +199,7 @@ END
         $outjob    = $1;
         $outext    = $2;
         
-        print <<END;
+        print_n <<END;
 outdir:     $outdir
 outfile:    $outfile
 outjob:     $outjob
