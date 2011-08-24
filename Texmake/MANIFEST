@@ -1,9 +1,6 @@
-Changes
 Makefile.PL
 MANIFEST
 README
-t/Texmake.t
-lib/Texmake.pm
 lib/Builder.pm
 lib/ColorFilter.pm
 lib/Colorizer.pm
