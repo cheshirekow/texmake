@@ -10,3 +10,4 @@ lib/LatexmlBuilder.pm
 lib/MakeMaker.pm
 lib/Printer.pm
 lib/PrintIncrementer.pm
+bin/texmake
