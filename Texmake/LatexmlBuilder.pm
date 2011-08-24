@@ -66,13 +66,15 @@ sub go()
 {
     my $this = shift;
     
+    $this->fork_watcher();
     $this->process_rootfile();
     $this->find_bibliography();
     $this->process_bibfiles();
     $this->postprocess();
     $this->resolve_dependencies();
+    $this->kill_watcher();
+    $this->make_cleanfile();
     $this->recurse_if_necessary();
-    
 }
 
 
@@ -104,6 +106,7 @@ sub process_rootfile
                         ."--path=$srcdir "
                         ."--dest=$outdir/$outjob\_$outext.xml "
                         ." 2>&1 ";
+    print_n 0, "Processing source for $outjob.xhtml";
     
     print_n 2, "Using command: $cmd";
     
@@ -226,6 +229,8 @@ sub process_bibfiles
     
     foreach my $bibfile (@$bibfiles)
     {
+        print_n 0, "Processing bibliography $bibfile";
+        
         my $cmd     = "$latexml $srcdir/$bibfile.bib "
                         ."--verbose "
                         ."--verbose "
@@ -277,6 +282,8 @@ sub postprocess
                         ."--sourcedirectory=$srcdir "
                         ."--format=$outext "
                         ."--dest=$outdir/$outjob.$outext ";
+    
+    print_n 0, "Postprocessing $outjob.$outext";
     
     my $bibfiles    = $this->{'bib_files'};
     
@@ -353,7 +360,7 @@ sub resolve_dependencies
     my $figMissing  = $this->{'fig_missing'};
     my $bibFiles    = $this->{'bib_files'};
     
-    my $missingFound= 1;
+    my $missingFound= 0;
     
     my %figRules;
     my @files;
@@ -459,7 +466,8 @@ sub resolve_dependencies
         my $input = $figRules{$output};
         
         print $fh_dep "$output : $input\n";
-        print $fh_dep "\t\${CONVERT} \$< \$@\n\n";
+        print $fh_dep "\t\@echo \"Generating figure \$@\" | \$(COLOR) green \n";
+        print $fh_dep "\t\@\${CONVERT} \$< \$@\n\n";
         print $fh_cache "$output : $input\n";
     }
     
@@ -589,4 +597,137 @@ sub kill_watcher
     waitpid($pid_watch,0);
     
     print_n "Process tree has been killed";
+}
+
+
+sub make_cleanfile
+{
+    my $this    = shift;
+    
+    my $srcdir = $this->{'src'}->{'dir'};
+    my $outdir = $this->{'out'}->{'dir'};
+    my $outjob = $this->{'out'}->{'job'};
+    my $outext = $this->{'out'}->{'ext'};
+    my $outfile= $this->{'out'}->{'file'};
+    
+    my $cleanfile   = "$outdir/clean_$outjob.$outext.d";
+    my $cleancache  = "$outdir/clean_$outjob.$outext.cache";
+    my $touchfile   = "$outdir/touchlist.txt";
+    my $rootfile    = "$outdir/$outjob\_$outext.tex";
+    
+    # note that we'll use a hash for output files so that we can easily 
+    # eliminate repeats
+    my %outputs;    # output files reported by the directory watcher
+    my $fh_cache;   # file handle for clean cache
+    my $fh_touch;
+    my $fh_clean;   # file handle for clean file
+    
+    # if the cachefile for outputs exists, then load it
+    if( -e $cleancache )
+    {
+        unless(open ($fh_cache, '<', $cleancache))
+        {
+            print_f "Failed to open cachefile: $cleancache  $!";
+            die;  
+        } 
+
+        while(<$fh_cache>)
+        {
+            chomp;
+            next if /^\s*$/;    #skip blank lines
+            $outputs{$_} = 1;
+        }
+        
+        close $fh_cache;
+    }
+    
+    # then open the touchfile from directoryWatch
+    unless ( open($fh_touch, '<', $touchfile) )
+    {
+        print_f "Failed to open $touchfile $!";
+        die;
+    }
+    
+    while(<$fh_touch>)
+    {
+        chomp;
+        
+        # skip empty lines
+        next if(/^\s*$/);
+        
+        # if the touchfile has a known notification then process it
+        if( /([^,]+),(.+)/ )
+        {
+            my $file   = $1;
+            my $notify = $2;
+            
+            # if the notification is one of the ones that indicate a write, then
+            # record the file as an output
+            if($notify eq "IN_MODFIY" 
+                    || $notify eq "IN_CLOSE_WRITE" 
+                    || $notify eq "IN_CREATE")
+            {
+                $outputs{$file} = $_;
+            }
+        }
+        
+        # otherwise just log a warning that we're skipping it
+        else
+        {
+            print_w "bad touchfile entry: $_";
+        }
+    }
+    
+    close $fh_touch;
+    
+    
+    # now we combine outputs from the cache and from the touchfile, and write
+    # them all to the clean rules and the cachefile
+    
+    unless( open($fh_clean, '>', $cleanfile) )
+    {
+        print_f "Failed to open $cleanfile $!";
+        die;
+    }
+    
+    unless( open($fh_cache, '>', $cleancache) )
+    {
+        print_f "Failed to open $cleancache $!";
+        die;
+    }
+    
+    print $fh_clean <<END;
+clean: clean_$outfile
+
+clean_$outfile : 
+END
+
+    print_n 2, "Touched files\n          ------------------------\n";
+    
+    foreach my $file (keys %outputs)
+    {
+        print_e "$file " . $outputs{$file};
+        
+        if($file=~/\.[^.]+/)
+        {
+            print $fh_clean "\t\@rm -fv $outdir/$file \n";
+        }
+        else
+        {
+            print $fh_clean "\t\@rm -rfv $outdir/$file \n";
+        }
+        print $fh_cache "$file \n";
+    }
+    
+    print $fh_clean <<END;
+	\@rm -fv $cleanfile 
+	\@rm -fv $cleancache 
+	\@rm -fv $rootfile 
+	\@rm -fv $touchfile 
+	\@rm -fv $outfile
+
+END
+
+    close $fh_clean;
+    close $fh_cache;
 }
