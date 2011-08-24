@@ -420,24 +420,27 @@ include roots.d
 
 %.xhtml: roots.d
 	@echo "Bulding Root Document $*_xhtml.tex"
-	cat $(SOURCE_DIR)/conditionals.tex > $*_xhtml.tex
-	echo "\xhtmloutputtrue" >> $*_xhtml.tex
-	echo "" >> $*_xhtml.tex
-	cat $(word 2,$^) >> $*_xhtml.tex
-	@echo "Running latexml on $*_xhtml.tex"
-	@latexml $*_xhtml.tex --path=xhtml/ --path=$(SOURCE_DIR) --dest=$*.xml > $*.xml.log 2>&1
-	@BIBSTRING=""; \
-    BIB="$(filter *.bib, $^)"; \
-    for BIBFILE in $$BIB; do \
-        echo "Running latexml on $$BIBFILE"; \
-        XMLFILE=`basename "$$BIBFILE" .bib`.xml; \
-        LOGFILE=`basename "$$BIBFILE" .bib`.xml.log; \
-        latexml $$BIBFILE --dest=$$XMLFILE > $$LOGFILE 2>&1; \
-        BIBSTRING="$$BIBSTRING --bibliography=$$XMLFILE"; \
-    done; \
-    echo $$BIBSTRING > bibstring.txt
-	@echo "postprocessing with `cat bibstring.txt`"
-	@latexmlpost $*.xml `cat bibstring.txt` --dest=$@ --css=navbar-left.css
+	@echo "${TEXBUILD} $@ $(word 2,$^) $filter *.bib, $^) " >> make.log 
+	@${TEXBUILD} $@ $(word 2,$^) $filter *.bib, $^) 2>&1 | $(COLORIZE)
+	
+#	cat $(SOURCE_DIR)/conditionals.tex > $*_xhtml.tex
+#	echo "\xhtmloutputtrue" >> $*_xhtml.tex
+#	echo "" >> $*_xhtml.tex
+#	cat $(word 2,$^) >> $*_xhtml.tex
+#	@echo "Running latexml on $*_xhtml.tex"
+#	@latexml $*_xhtml.tex --path=xhtml/ --path=$(SOURCE_DIR) --dest=$*.xml > $*.xml.log 2>&1
+#	@BIBSTRING=""; \
+#    BIB="$(filter *.bib, $^)"; \
+#    for BIBFILE in $$BIB; do \
+#        echo "Running latexml on $$BIBFILE"; \
+#        XMLFILE=`basename "$$BIBFILE" .bib`.xml; \
+#        LOGFILE=`basename "$$BIBFILE" .bib`.xml.log; \
+#        latexml $$BIBFILE --dest=$$XMLFILE > $$LOGFILE 2>&1; \
+#        BIBSTRING="$$BIBSTRING --bibliography=$$XMLFILE"; \
+#    done; \
+#    echo $$BIBSTRING > bibstring.txt
+#	@echo "postprocessing with `cat bibstring.txt`"
+#	@latexmlpost $*.xml `cat bibstring.txt` --dest=$@ --css=navbar-left.css
 
 clean:
 	@rm -rvf $^
