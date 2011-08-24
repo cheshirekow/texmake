@@ -1,2 +1,0 @@
-ln -s post-commit ../.git/hooks
-

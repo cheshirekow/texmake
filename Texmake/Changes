@@ -1,0 +1,6 @@
+Revision history for Perl extension Texmake.
+
+0.01  Wed Aug 24 16:35:33 2011
+	- original version; created by h2xs 1.23 with options
+		-AXc -n Texmake
+

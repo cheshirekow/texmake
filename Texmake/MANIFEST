@@ -1,0 +1,15 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/Texmake.t
+lib/Texmake.pm
+lib/Builder.pm
+lib/ColorFilter.pm
+lib/Colorizer.pm
+lib/Filter.pm
+lib/LatexBuilder.pm
+lib/LatexmlBuilder.pm
+lib/MakeMaker.pm
+lib/Printer.pm
+lib/PrintIncrementer.pm
