@@ -25,7 +25,6 @@ sub new()
     my %copy    = %$parent;
     my $this    = \%copy;
     
-    $parent->create_rootfile("\\htmloutputtrue")
     switch($this->{'out'}->{'ext'})
     {
         case "html"
