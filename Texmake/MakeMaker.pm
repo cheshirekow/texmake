@@ -81,8 +81,8 @@ sub check_for_cachefile()
         # we need, which will depend on the current path (this is so the user 
         # doesn't have to export a new path every time)
         foreach my $name ( qw( 
-            latex       pdflatex    latexml     kpsewhich 
-            bibtex      find        tee
+            latex       pdflatex    latexml     latexmlpost
+            kpsewhich   bibtex      find        tee
             svg2pdf     svg2eps     convert     directoryWatch
             ))
         {
@@ -382,7 +382,7 @@ SVG2PDF := $svg2pdf
 SVG2EPS := $svg2eps
 CONVERT := $convert
 TEXMAKE := $texmake
-TEXBUILD:= \$(TEXMAKE) build
+TEXBUILD:= \$(TEXMAKE) -d 10 build
 COLOR   := \$(TEXMAKE) color
 COLORIZE:= \$(TEXMAKE) color-filter "^\[WARNING\]" yellow "^\[FATAL\]" red "." cyan
 TEE     := $tee
@@ -420,8 +420,8 @@ include roots.d
 
 %.xhtml: roots.d
 	@echo "Bulding Root Document $*_xhtml.tex"
-	@echo "${TEXBUILD} $@ $(word 2,$^) $filter *.bib, $^) " >> make.log 
-	@${TEXBUILD} $@ $(word 2,$^) $filter *.bib, $^) 2>&1 | $(COLORIZE)
+	@echo "${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) " >> make.log 
+	@${TEXBUILD} $@ $(word 2,$^) $(filter *.bib, $^) 2>&1 | $(COLORIZE)
 	
 #	cat $(SOURCE_DIR)/conditionals.tex > $*_xhtml.tex
 #	echo "\xhtmloutputtrue" >> $*_xhtml.tex

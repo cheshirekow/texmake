@@ -32,9 +32,9 @@ our $VERSION = '0.01';
 
 
 our $tab    = "";
-my $ten     = "          ";
-my $debug   = 0;
-my $levelcache = 1;
+our $ten     = "          ";
+our $debug   = 0;
+our $levelcache = 1;
 
 sub print_w
 {
@@ -73,10 +73,10 @@ sub _print
     
     # if the first parameter passed to the public print method contains non
     # numeric characters, then no level was provided
-    if($level=~/\D/)
+    if($level=~/\D/ || length($level) < 1)
     {
         unshift(@_,$level);
-        $level = 1;
+        $level = $levelcache;
     }
     
     $levelcache = $level;

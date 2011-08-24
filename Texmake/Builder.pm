@@ -262,15 +262,15 @@ sub create_rootfile()
     }
     
     print $fh <<END;
-    \\newif\\ifpdfoutput
-    \\newif\\ifxhtmloutput
-    \\newif\\ifdvioutput
-    
-    $cmd
-    
-    \\listfiles
-    
-    \\input{$srcfile}
+\\newif\\ifpdfoutput
+\\newif\\ifxhtmloutput
+\\newif\\ifdvioutput
+
+$cmd
+
+\\listfiles
+
+\\input{$srcfile}
 END
     
     close $fh;
