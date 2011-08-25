@@ -174,7 +174,7 @@ sub find_texmakefiles
     while( ($#directories + 1) > 0 )
     {
         my $dir         = pop @directories;
-        my $rel_dir     = "$dir/";
+        my $rel_dir     = "$dir";
         my $rel_path    = "$dir/texmakefile";
         my $abs_dir     = "$src/$dir";
         my $abs_path    = "$src/$dir/texmakefile";
