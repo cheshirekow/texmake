@@ -12,7 +12,8 @@ my $colors =
     'blue'      => 34,
     'magenta'   => 35,
     'cyan'      => 36,
-    'white'     => 37
+    'white'     => 37,
+    'default'   => 39
 };
 
 
@@ -81,8 +82,7 @@ sub go()
         print $_;
     }
     
-        
-    system( "tput sgr0" );
+    print "\033[" . ${$colors}{'default'} . "m";
 }
 
 
