@@ -275,6 +275,7 @@ sub postprocess
     my $exitCode    = 0;                # exit status of (pdf)latex
     
     my $fh;
+    my $fh_log;
     
     my $cmd         = "$latexmlpost "
                         ."--verbose "
@@ -282,7 +283,7 @@ sub postprocess
                         ."--css=navbar-left.css "
                         ."--sourcedirectory=$srcdir "
                         ."--format=$outext "
-                        ."--dest=$outdir/$outjob.$outext > $outdir/$outjob.$outext.log ";
+                        ."--dest=$outdir/$outjob.$outext ";
     
     print_n 0, "Postprocessing $outjob.$outext";
     
@@ -302,9 +303,12 @@ sub postprocess
     print_n 2, "Using command: $cmd";
     
     open ($fh, '-|', $cmd);
+    open ($fh_log, '>', "$outdir/$outjob.$outext.log");
     
     while(<$fh>)
     {
+        print $fh_log $_;
+        
         chomp;
         print_n 3, $_;
         
@@ -320,6 +324,7 @@ sub postprocess
     }
     
     close ($fh);
+    close ($fh_log);
     $exitCode = ${^CHILD_ERROR_NATIVE};
 
     print_n "Found Graphics\n----------------------";
