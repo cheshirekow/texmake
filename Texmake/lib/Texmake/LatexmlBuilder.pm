@@ -279,9 +279,10 @@ sub postprocess
     my $cmd         = "$latexmlpost "
                         ."--verbose "
                         ."--verbose "
+                        ."--css=navbar-left.css "
                         ."--sourcedirectory=$srcdir "
                         ."--format=$outext "
-                        ."--dest=$outdir/$outjob.$outext ";
+                        ."--dest=$outdir/$outjob.$outext > $outdir/$outjob.$outext.log ";
     
     print_n 0, "Postprocessing $outjob.$outext";
     
