@@ -6,6 +6,11 @@ use Cwd qw(getcwd abs_path);
 
 use Texmake::Printer qw(print_w print_f print_n print_e);
 use Texmake::PrintIncrementer;
+use Texmake::DependencyGraph::Node;
+use Texmake::Initializer::PDF;
+use Texmake::Initializer::DVI;
+use Texmake::Initializer::HTML;
+use Texmake::Initializer::XHTML;
 use File::Basename;
 use Switch;
 use File::Path qw(make_path);
@@ -51,14 +56,7 @@ sub new
     push(@stack,$stackframe);
     $this->{'stack'} = \@stack;
     
-    
-    my $target = {
-        'output' => $this->{'outdir'}."/texmake.cache",
-        'intput' => '', 
-    };
-    
     my @targets;
-    push(@targets, $target);
     $this->{'targets'} = \@targets;
     
     bless($this);   # tell the reference it is a reference to a 
@@ -103,9 +101,9 @@ HERE
             die;
         }
         
-        unless(-e 'texmake.pl')
+        unless(-e './texmake.pl' && -f './texmake.pl')
         {
-            print_f "No texmake.pl in $srcdir";
+            print_f "No texmake.pl in $srcdir (or its not a regular file)";
             die;
         }
         
@@ -131,50 +129,46 @@ HERE
         print_e "($output,$source)";
     }
     
-    print_n 0, "Creating directories and rootfiles";
+    print_n 0, "Creating directories, rootfiles, and dependency graphs";
     foreach my $target( @$targets )
     {
         my $output = $target->{'output'};
         my $source = $target->{'source'};
         my $build  = "$output.texmake";
-        print_e "Creating $build";
-        
-        unless(-e $build)
+
+        if(-e $build)
+        {
+            print_e "$build exists, no need to create";
+            unless( -d $build )
+            {
+                print_f "$build exists but is not a directory, please attend 
+                            to that before continuing";
+                die;
+            }   
+        }
+        else
         {
             unless(make_path($build))
             {
                 print_f "Failed to create $build";
                 die;
             }
+            print_e "Creating $build";
         }
         
         my ($filename,$directories,$suffix) = 
             fileparse($output,qw(pdf dvi html xhtml));
             
-        my $cmd;
+        my $init;
         switch($suffix)
         {
-            case "pdf"      {$cmd = "\\pdfoutputtrue";}
-            case "dvi"      {$cmd = "\\pdfoutputtrue";}
-            case "html"     {$cmd = "\\pdfoutputtrue";}
-            case "xhtml"    {$cmd = "\\pdfoutputtrue";}
+            case "pdf"      {$init = new Texmake::Initializer::PDF($output,$source);}
+            case "dvi"      {$init = new Texmake::Initializer::DVI($output,$source);}
+            case "html"     {$init = new Texmake::Initializer::HTML($output,$source);}
+            case "xhtml"    {$init = new Texmake::Initializer::XHTML($output,$source);}
         }
         
-        
-        my $fh;
-        open ($fh, '>', "$build/root.tex");
-print $fh <<"HERE";
-\\newif\\ifpdfoutput
-\\newif\\ifxhtmloutput
-\\newif\\ifdvioutput
-
-$cmd
-
-\\listfiles
-
-\\input{$source}
-HERE
-        close $fh;
+        $init->go();
     }
 }
 

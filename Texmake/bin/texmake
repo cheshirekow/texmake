@@ -6,6 +6,7 @@ use Texmake::ColorFilter;
 use Texmake::Filter;
 use Texmake::Colorizer;
 use Texmake::Initializer;
+use Texmake::Maker;
 use Texmake::Builder;
 use Texmake::Printer qw(print_w print_e print_f print_n);
 
@@ -60,6 +61,12 @@ switch($command)
     {
         my $builder = Texmake::Builder->new(@ARGV);
         $builder->go();
+    }
+    
+    case "make"
+    {
+        my $maker = Texmake::Maker->new(@ARGV);
+        $maker->go();
     }
     
     case "color"
