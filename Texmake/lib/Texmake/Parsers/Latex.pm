@@ -1,4 +1,4 @@
-package Texmake::Parser::LateXML;
+package Texmake::Parsers::Latex;
 
 use strict;
 

@@ -1,4 +1,4 @@
-package Texmake::Parser::Null;
+package Texmake::Parsers::Null;
 
 use strict;
 
@@ -48,6 +48,8 @@ sub go
         chomp;
         print_e $_;
     }
+    
+    return 2;
 }
 
 

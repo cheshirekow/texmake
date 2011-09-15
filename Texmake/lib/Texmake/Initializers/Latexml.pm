@@ -1,4 +1,4 @@
-package Texmake::Initializer::XHTML;
+package Texmake::Initializers::Latexml;
 
 use strict;
 

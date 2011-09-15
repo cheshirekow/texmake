@@ -12,6 +12,8 @@ use Texmake::Parser::PDFLatex;
 use Texmake::Parser::LateXML;
 use Texmake::Parser::Null;
 
+use File::Path qw(make_path);
+
 # creates a new dependency graph node
 sub new
 {
@@ -48,7 +50,31 @@ sub go
     my $parser;
     my $build   = $node->{'build'};
     my $output  = $node->{'file'};
+    my $outdir  = $node->{'outdir'};
     my $rebuild = 1;
+    
+    if($outdir)
+    {
+        unless(-e $outdir)
+        {
+            print_n 0, "$outdir doesn't exist, creating it";
+            unless(make_path($outdir))
+            {
+                print_f "Failed to create directory $outdir";
+            }
+        }
+        
+        print_n 0, "changing to $outdir";
+        unless(chdir $outdir)
+        {
+            print_f "Can't change to $outdir";
+            die;
+        }
+    }
+    else
+    {
+        print_n 0, "No outdir specified";
+    }
 
     $/ = "\n";
     while($rebuild)
@@ -82,13 +108,7 @@ sub go
         
         my $status = $parser->go();
         close $fh;
-        
-        switch($status)
-        {
-            case -1     {return -1;}
-            case 0      {return 0;}
-            case 1      {$rebuild = 1;}
-        }
+        return $status;
     }
 }
 

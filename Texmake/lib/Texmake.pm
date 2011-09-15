@@ -4,6 +4,16 @@ use 5.010001;
 use strict;
 use warnings;
 
+use constant EVAL_FAIL      => -1;
+use constant EVAL_NOACTION  => 0;
+use constant EVAL_NEWER     => 1;
+use constant EVAL_BUILDME   => 2;
+
+use constant BUILD_FAIL     => -1;
+use constant BUILD_SUCCESS  => 0;
+use constant BUILD_REBUILD  => 1;
+
+
 require Exporter;
 
 our @ISA = qw(Exporter);
@@ -16,7 +26,13 @@ our @ISA = qw(Exporter);
 # If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
 # will save memory.
 our %EXPORT_TAGS = ( 'all' => [ qw(
-	
+	EVAL_FAIL
+	EVAL_NOACTION
+	EVAL_NEWER
+	EVAL_BUILDME
+	BUILD_FAIL
+	BUILD_SUCCESS
+	BUILD_REBUILD
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );

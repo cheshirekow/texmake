@@ -10,23 +10,8 @@
 \title{Texmake Test}
 \author{Josh Bialkowski \\ \small jbialk@mit.edu}
 
-
-
-\ifpdfoutput
-    \usepackage{fullpage}
-    \usepackage{float}
-\else
-    \ifdvioutput
-        \usepackage{fullpage}
-        \usepackage{float}
-    \else
-        \ifxhtmloutput
-        
-        \else
-            \PackageError{no-package}{unknown output format}{no help text}
-        \fi 
-    \fi    
-\fi
+\usepackage{fullpage}
+\usepackage{float}
     
 \pagestyle{plain}
  
