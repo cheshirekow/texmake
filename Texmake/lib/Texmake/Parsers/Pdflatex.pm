@@ -18,6 +18,7 @@ use Texmake::Printer qw(
         print_e);
 use Texmake::PrintIncrementer;
 use Texmake::DependencyGraph::Nodes::Source;
+use Texmake::DependencyGraph::Nodes::Bibtex;
 use Texmake::Initializers::Graphics qw(generate); 
 
 use constant DEP_DROP => -1;
@@ -195,13 +196,47 @@ sub parse
         # check for rerun suggestion
         if(/rerun/i)
         {
+            print_n 0, "Found rerun suggestion, will mark for rerun";
             $status = BUILD_REBUILD;
         }
         
         # check for missing bibliography files
         if(/No file ([^\.]+).bbl/)
         {
+            if($node->{'bibNode'})
+            {
+                print_f "Internal error, detected a missing bibligraphy file "
+                        ."but pdflatex node already has a bibtex chidl";
+                die;
+            }
+            
+            push(@loaded,"$outdir/$1.bbl");
+            
             print_n 0, "Found missing bibliography";
+            my $bibNode = 
+                new Texmake::DependencyGraph::Nodes::Bibtex($outdir,$srcdir);
+            $node->dependsOn($bibNode);
+            $node->{'bibnode'}  = $bibNode;
+            $bibNode->{'dirty'} = 1;
+            
+            $status = BUILD_REBUILD;
+        }
+        
+        # check for undefined citations
+        # Latex reports undefined citations as something like 
+        # "LaTeX Warning: Citation `bookc' on page 2 undefined on input line 3."
+        # so we'll match strings like this. Whenver a citation is missing, 
+        # we should mark bibtex for a run and rerun ourselves (though we'll
+        # need some kind of flag to prevent it a second time)
+        if(/Citation `[^']+' on page \d+ undefined/)
+        {
+            if($node->{'bibNode'})
+            {
+                $node->{'bibNode'}->{'dirty'} = 1;
+            }
+
+            # actually we wont specify the need for a rerun right here, because
+            # we'll handle the bibtex node especially
         }
     }
     

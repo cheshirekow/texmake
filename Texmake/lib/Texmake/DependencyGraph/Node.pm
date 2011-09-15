@@ -81,8 +81,8 @@ sub dependsOn
 sub evaluate
 {
     my $this        = shift;
-    my $parenttime  = (@_ ? shift : 0);
-    my $force       = (@_ ? shift : 0); 
+    my $parenttime  = shift;
+    my $force       = shift; 
     my $depends     = $this->{'depends'};
     my $file        = $this->{'outfile'};
     my $retval      = EVAL_NOACTION;
@@ -105,11 +105,15 @@ sub evaluate
             print_n 0, "$file is newer than parent";
             $retval = EVAL_NEWER;
         }
+        print_e     "   mytime: $mtime\n" 
+                   ."   parent: $parenttime\n"
+                   ."   force:  $force";
     }
     
     #otherwise, clearly it needs to be rebuilt
     else
     {
+        print_n 0, "Does not exist";
         $this->{'dirty'} = 1;
         $retval = EVAL_NEWER; 
     }
@@ -117,6 +121,7 @@ sub evaluate
     # recurse into each child, evaluating (and possibly building) them
     foreach my $child( @$depends )
     {
+        print_n 0, "evaluating child, passing mtime of $mtime";
         my $status = $child->evaluate($mtime);
         if($status > EVAL_NOACTION)
         {
@@ -156,6 +161,8 @@ sub evaluate
         {
             $retval = EVAL_BUILDME;
         }
+        
+        $this->{'dirty'} = 0;
     }
     
     return $retval;
