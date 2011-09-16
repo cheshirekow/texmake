@@ -88,8 +88,14 @@ sub build
     my $this        = shift;
     my $outdir      = dirname($this->{'outfile'});
     my $srcdir      = $this->{'srcdir'};
+    my $result      = BUILD_SUCCESS;
+    my $stateNodes  = $this->{'stateFiles'};
     
-    my $intermediates = $this->{'stateFiles'};
+    # create backup copies of all of latex's state files
+    foreach my $state (@$stateNodes)
+    {
+        $state->backup();
+    }
     
     print_n "In pdflatex node's build method";
    
@@ -133,10 +139,34 @@ sub build
         die;
     }
     
-    # special bibtex call, wont actually update the .bbl file time
-    if($this->{'bibNode'})
+    # we don't want to do these steps if pdflatex failed
+    unless($result == BUILD_FAIL)
     {
-        $this->{'bibNode'}->build(1);
+        # special bibtex call, wont actually update the .bbl file time
+        if($this->{'bibNode'})
+        {
+            $this->{'bibNode'}->build(1);
+        }
+        
+        # evaluate if any of the state files are still changing
+        foreach my $state (@$stateNodes)
+        {
+            my $stateStatus = $state->evaluate();
+            if($stateStatus > EVAL_NOACTION)
+            {
+                print_n 0, "Determined that a state file ("
+                            . $state->{'outfile'} 
+                            . ") is still in flux, so rebuilding";
+                $result = BUILD_REBUILD;
+                last;
+            }
+        }        
+    }
+    
+    if($result == BUILD_SUCCESS)
+    {
+        print_n 0, "Document stabelized after " 
+                    . ($this->{'run'}+1) . " iterations";
     }
     
     return $result;
