@@ -14,7 +14,16 @@ use XML::Dumper;
 use Texmake qw(EVAL_FAIL);
 use Texmake::Printer qw(print_w print_f print_n print_e);
 use Texmake::PrintIncrementer;
+use Texmake::BuilderRegistry;
 
+use Texmake::Tools::Bibtex;
+use Texmake::Tools::Copy;
+use Texmake::Tools::Imagemagick;
+use Texmake::Tools::Pdflatex;
+use Texmake::Tools::Source;
+use Texmake::Tools::Svg2eps;
+use Texmake::Tools::Svg2pdf;
+use Texmake::Tools::TexRootMaker;
 
 
 
@@ -23,6 +32,8 @@ use Texmake::PrintIncrementer;
 #               build process
 sub new()
 {
+    Texmake::BuilderRegistry::init();
+    
     # first, shift off the class name
     shift;
 

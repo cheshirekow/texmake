@@ -1,5 +1,3 @@
-package Texmake::Tools::Copy;
-
 ##  @class
 #   @brief  a node which creates the output by copying another file
 package Texmake::Tools::Copy::Node;

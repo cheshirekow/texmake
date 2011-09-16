@@ -1,54 +1,3 @@
-package Texmake::Tools::Bibtex;
-
-use strict;
-
-use Switch;
-use File::stat;
-use File::Copy;
-use File::Basename qw(dirname);
-use Time::localtime;
-use Cwd qw(getcwd);
-
-use Texmake ':all';
-use Texmake::Printer ':all';
-use Texmake::PrintIncrementer;
-
-use Texmake::Node;
-
-sub getSourceTypes
-{
-    return ();
-}
-
-sub getOutputTypes
-{
-    return qw(bbl);
-}
-
-
-
-sub parse
-{
-    my $node    = shift;
-    my $fh      = shift;    
-    my $outdir  = shift;
-    my $srcdir  = shift;
-    my $status  = BUILD_SUCCESS;
-    my @loaded  = ();
-    my @figures = ();
-    
-    print_n 0, "Parser::Bibtex is reading from fh: $fh";
-    
-    while(<$fh>)
-    {
-        chomp;
-        print_e $_;
-    }
-    
-    return $status;
-}
-
-
 
 ##  @class
 #   @brief  a node which uses bibtex to compile a .bbl document from a .aux 
@@ -155,6 +104,32 @@ sub build
     }
     
     return $result;
+}
+
+
+
+
+
+
+sub parse
+{
+    my $node    = shift;
+    my $fh      = shift;    
+    my $outdir  = shift;
+    my $srcdir  = shift;
+    my $status  = BUILD_SUCCESS;
+    my @loaded  = ();
+    my @figures = ();
+    
+    print_n 0, "Parser::Bibtex is reading from fh: $fh";
+    
+    while(<$fh>)
+    {
+        chomp;
+        print_e $_;
+    }
+    
+    return $status;
 }
 
 

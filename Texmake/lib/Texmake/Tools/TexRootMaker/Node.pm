@@ -1,27 +1,8 @@
-package Texmake::Tools::TexRootMaker;
-
-use     Texmake::Node;
-require Texmake::Tools::Source;
-
-sub createTree
-{
-    my $outdir      = shift;
-    my $srcdir      = shift;
-    my $entries     = shift;
-    my $files       = $entries->{'inputs'};
-    
-    for($i=0; $i <= $#$files; $i++ )
-    {
-        $files[$i] = "$srcdir/".$files[$i];
-    }
-    
-    my $texNode     = new Texmake::Tools::TexRootMaker::Node($outdir,$entries);
-}
-
-
 ##  @class
 #   @brief  a node which uses pdflatex to compile a .tex document
 package Texmake::Tools::TexRootMaker::Node;
+
+use strict;
 
 use Texmake ':all';
 use Texmake::Printer ':all';
@@ -64,7 +45,7 @@ sub build
 {
     my $this        = shift;
     my $outfile     = $this->{'outfile'};
-    my $files       = $entries->{'inputs'};
+    my $files       = $this->{'inputs'};
     
     print_n "In TexRootMaker node's build method";
    
@@ -83,9 +64,9 @@ sub build
     }
    
     # if the user gave us a header then output it
-    if( exists $entries->{'header'} )
+    if( exists $this->{'header'} )
     {
-        print $fh $entries->{'header'};
+        print $fh $this->{'header'};
         print $fh "\n";
     }
     
@@ -97,9 +78,9 @@ sub build
     }
     
     # if the user gave us a footer then output it
-    if( exists $entries->{'footer'} )
+    if( exists $this->{'footer'} )
     {
-        print $fh $entries->{'footer'};
+        print $fh $this->{'footer'};
         print $fh "\n";
     }
     

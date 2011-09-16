@@ -1,19 +1,3 @@
-package Texmake::Tools::Svg2pdf;
-require Texmake::Tools::Source;
-
-sub createTree
-{
-    my $outfile = shift;
-    my $srcfile = shift;
-    my $pkg     = 'Texmake::Tools::';
-    
-    my $node1 = ($pkg.'Svg2pdf::Node')->new($outfile,$srcfile);
-    my $node2 = ($pkg.'Source::Node')->new($srcfile);
-    
-    $node1->dependsOn($node2);
-    return $node1;
-}
-
 ##  @class
 #   @brief  a node which uses Svg2pdf to convert image types
 package Texmake::Tools::Svg2pdf::Node;
@@ -33,7 +17,6 @@ use Texmake::Printer qw(print_w print_f print_n print_e);
 use Texmake::PrintIncrementer;
 
 use Texmake::Node;
- 
 
 our @ISA = ('Texmake::Node');
 
@@ -82,8 +65,6 @@ sub build
     my $srcfile     = $this->{'srcfile'};
     my $result      = BUILD_SUCCESS;
     
-    print_n "In svg2pdf node's build method";
-    
      # first make sure that the output directory exists
     my $outdir      = dirname($outfile);
     if( -e $outdir )
@@ -108,6 +89,9 @@ sub build
    
     # generate the command to execute
     my $cmd = "svg2pdf $srcfile $outfile";   
+    
+    print_n 0, "Building $outfile";
+    print_e $cmd;
     
     # call the command without a parser
     system($cmd);

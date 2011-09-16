@@ -9,8 +9,9 @@ use Switch;
 use File::stat;
 use File::Copy;
 use Time::localtime;
- 
-use Texmake::Printer qw(print_w print_f print_n print_e);
+
+use Texmake ':all'; 
+use Texmake::Printer ':all';
 use Texmake::PrintIncrementer;
 use Texmake::Node;
 
@@ -51,9 +52,12 @@ sub new
 #   @return    * 0 if the build was successful
 #              * 1 if if the build needs to be performed again
 #              * -1 if the build failed 
-sub doBuild
+sub build
 {
-    return -1;
+    my $this = shift;
+    print_w "Somehow found my way into the build method of a source "
+                ."node for file " . $this->{'outfile'};
+    return BUILD_FAIL;
 }
 
 

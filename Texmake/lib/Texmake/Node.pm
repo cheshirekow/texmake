@@ -151,7 +151,7 @@ sub evaluate
     {
         print_n 0, "$file is dirty";
     
-        my $status = $this->doBuild();    
+        my $status = $this->build();    
         if( $status == BUILD_FAIL)
         {
             $retval = EVAL_FAIL;

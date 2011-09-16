@@ -19,10 +19,7 @@ use XML::Dumper;
 use Texmake::Printer qw(print_w print_f print_n print_e);
 use Texmake::PrintIncrementer;
 use Texmake::Node;
-
-our @builtInBuilders = 
-    qw(Pdflatex
-       );
+use Texmake::BuilderRegistry;
        
 our $singleton = undef;
 
@@ -33,6 +30,8 @@ our $singleton = undef;
 #               documents
 sub new
 {
+    Texmake::BuilderRegistry::init();
+    
     my $this = 
     {
         'srcdir'  => undef,
@@ -41,9 +40,6 @@ sub new
         'coutdir' => undef,
         'stack'   => undef,
         'targets' => undef,
-        'buildMap'=> {},
-        'srcTypes'=> {},
-        'outTypes'=> {},
     };
     
     # first, shift off the class name
@@ -74,16 +70,6 @@ sub new
     
     my @targets;
     $this->{'targets'} = \@targets;
-    
-    foreach my $builder (@builtInBuilders)
-    {
-        $builder    = 'Texmake::Tools::'.$builder;
-        eval "require $builder";
-        my $srcTypes= ($builder)->getSourceTypes();
-        my $outTypes= ($builder)->getOutputTypes();
-        
-        doRegisterBuilder($this,$builder,$srcTypes,$outTypes);
-    }
     
     bless($this); 
     
@@ -206,32 +192,26 @@ HERE
         }
         else
         {
-            my $outTypes = $this->{'outTypes'};
-            my $srcTypes = $this->{'srcTypes'};
-    
-            # parse the output file name into basename, directory, and suffix        
-            my ($outBase,$outDir,$outSuffix) = fileparse($output,keys %$outTypes);
-            my ($srcBase,$srcDir,$srcSuffix) = fileparse($source,keys %$srcTypes);
-            
-            my $buildMap = $this->{'buildMap'};
-        
-            unless( exists $buildMap->{$srcSuffix} )
+            $builder = Texmake::BuilderRegistry::findBuilder(
+                                                    $target->{'srcfile'},
+                                                    $target->{'outfile'});
+            if($builder)
             {
-                print_f "No builder for input $source";
+                print_n 0, "Resolved builder $builder to generate "
+                            . $target->{'outfile'} . " from "
+                            . $target->{'srcfile'};
+            }
+            else
+            {
+                print_f "Failed to find builder to generate "
+                            . $target->{'outfile'} . " from "
+                            . $target->{'srcfile'}
+                            . " and no user builder specified";
                 die;
             }
-            
-            my $srcMap  = $buildMap->{$srcSuffix};
-            
-            unless( exists $srcMap->{$outSuffix} )
-            {
-                print_f "No builder for output $output, input $source";
-                die;
-            }
-            
-            $builder = $srcMap->{$outSuffix};
         }
         
+        eval "require $builder";
         my $tree    = ${builder}->createTree($target);
 
         my $xmldump = new XML::Dumper();
@@ -319,44 +299,9 @@ HERE
 
 
 
-sub doRegisterBuilder
+sub registerBuilder
 {
-    my $this        = shift;
-    my $builder     = shift;
-    my $srcTypes    = shift;
-    my $outTypes    = shift;
-    my $buildMap    = $this->{'buildMap'};
-    my $srcHash     = $this->{'srcTypes'};
-    my $outHash     = $this->{'outTypes'};
-    
-    print_n 0, "Trying to register builder $builder";
-    
-    foreach my $src (@$srcTypes)
-    {
-        $srcHash->{$src} = 1;
-        
-        unless(exists $buildMap->{$src})
-        {
-            $buildMap->{$src} = {};
-        }
-        my $srcMap = $buildMap->{$src};
-        
-        foreach my $out (@$outTypes)
-        {
-            $outHash->{$out} = 1;
-            
-            if(exists $srcHash->{$out})
-            {
-                print_w "Overriding $src to $out builder " . 
-                            $srcHash->{$out} . " with $builder";
-            }
-            else
-            {
-                print_n 0, "Registering builder $builder for $src -> $out";
-            }
-            $srcMap->{$out} = $builder;
-        }
-    }
+    Texmake::BuilderRegistry::registerBuilder(@_);
 }
 
 

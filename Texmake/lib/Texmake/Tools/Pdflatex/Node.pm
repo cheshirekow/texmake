@@ -1,85 +1,132 @@
+##  @class
+#   @brief  a node which uses pdflatex to compile a .tex document
+package Texmake::Tools::Pdflatex::Node;
+
+
 use strict;
 
 use Switch;
 use File::stat;
 use File::Copy;
-use File::Basename qw(dirname);
+use File::Path qw(make_path);
+use File::Basename qw(dirname basename);
 use Time::localtime;
 use Cwd qw(getcwd);
-
-
-##  @class
-#   @brief  a node which uses pdflatex to compile a .tex document
-package Texmake::Tools::Pdflatex;
-
 
 use Texmake ':all';
 use Texmake::Printer ':all';
 use Texmake::PrintIncrementer;
 
 use Texmake::Node;
+use Texmake::Tools::Source::Node;
+use Texmake::Tools::Copy::Node;
+use Texmake::Tools::Bibtex::Node;
+use Texmake::Tools::TexRootMaker::Node;
 
-require Texmake::Tools::Source;
-require Texmake::Tools::Copy;
-require Texmake::Tools::Bibtex;
-require Texmake::Tools::TexRootMaker;
+our @ISA = ('Texmake::Node');
 
-sub getSourceTypes
+
+##  @cmethod object new($output,$srcdir)
+#   @brief   constructor, creates a new pdflatex node
+#   @param[in]  output  the output file which is created
+#   @param[in]  srcdir  the directory where the sources are located
+#
+#   The pdf builder makes a lot of assumptions. It assumes that there is a
+#   directory called $output.texmake which contains a file called root.tex
+#   which references the actual source document. The only piece of 
+#   extra information the builder needs is the source directory where it 
+#   should point pdflatex in addition to the build directory. This source 
+#   directory is also where the parser will look for missing dependencies
+#    
+sub new
 {
-    my @srcTypes = qw(tex);
-    return \@srcTypes;
-}
+    my $this;
 
-sub getOutputTypes
-{
-    my @outTypes = qw(pdf);
-    return \@outTypes;
-}
-
-
-
-##  @method void createTree($target)
-#   @brief  performs the actual initialization, creating the build directory,
-#           generating the rootfile, generating the dependency graph
-#   @param[in]  init    reference to the Texmake::Initializer who is calling us
-sub createTree
-{
-    my $class   = shift;
-    my $target  = shift;
-    my $output  = $target->{'outdir'} . '/' . $target->{'outfile'};
-    my $outdir  = "$output.texmake";
-    my $buildout= "$outdir/root.pdf";
-    my $srcdir  = $target->{'srcdir'};
-    my $params  = {
-        'outdir' => $target->{'outdir'},
-        'srcdir' => $target->{'srcdir'},
-        'inputs' => $target->{'inputs'},
-        'header' => $target->{'header'},
-        'footer' => $target->{'fooder'}
-        };
+    # first, shift off the class name
+    shift;
     
-    # if the user passed us a string, then we assume it is the file name of the
-    # source to include, otherwise we assume it's a hash of inputs, header,
-    # and footer
-    if( exists $target->{'srcfile'} )
+    # this method requires two parameters
+    if( ($#_ +1) == 2 )
     {
-        print_n 0, "Using sourcefile " . $target->{'srcfile'} . " for pdflatex inputs";
-        my @inputs = ( $target->{'srcfile'} );
-        $params->{'inputs'} = \@inputs;
+        my $outdir      = shift;
+        my $srcdir      = shift;
+        
+        # create the base class object
+        $this = new Texmake::Node("$outdir/root.pdf");
+        
+        # we also need to store the source directory of this generated document
+        $this->{'srcdir'} = $srcdir;     
+        
+        # the bibliography node get's a special pointer so that the parser
+        # can mark the bibliography dirty if the output shows missing citations
+        $this->{'bibNode'} = undef;
     }
-     
-    my $pkg         = "Texmake::Tools::";
-    my $copyNode    = ($pkg.'Copy::Node')->new($output,$buildout);    
-    my $pdflatexNode= ($pkg.'Pdflatex::Node')->new($outdir,$srcdir);
-    my $rootfileNode= ($pkg.'TexRootMaker::Node')->new($params);
-
-    # note:
-    # we don't need to explicitly add the source file since the scanner will
-    # pick that up during the first build
-    $copyNode->dependsOn($pdflatexNode);
-    $pdflatexNode->dependsOn($rootfileNode);
+    else
+    {
+        die "Pdflatex node created with wrong argument list";
+    }
     
-    return $copyNode;
+    bless($this);
+    return $this;
+}
+
+
+
+##  @method bool doBuild(void)
+#   @return    * 0 if the build was successful
+#              * 1 if if the build needs to be performed again
+#              * -1 if the build failed 
+sub build
+{
+    my $this        = shift;
+    my $outdir      = dirname($this->{'outfile'});
+    my $srcdir      = $this->{'srcdir'};
+    
+    print_n "In pdflatex node's build method";
+   
+    my $cwd         = getcwd();
+    print_n 0, "Changing to working directory $outdir";
+    unless(chdir $outdir)
+    {
+        print_f "Failed to change to build directory $outdir";
+        die;
+    }
+    
+    # generate the command to execute
+    my $cmd = "export TEXINPUTS=$srcdir:$outdir: "
+            ."&& pdflatex -interaction nonstopmode root.tex";   
+    my $fh;
+    
+    # open a pipe from the command to our process
+    open( $fh, '-|', $cmd);
+    
+    # create a parser object, the parser needs to know this node (so that it
+    # can append dependencies), the file handle of the process (so that it can 
+    # read the output), the output directory (so it knows where to put 
+    # generated files which are missing), and the source directory (so it knows
+    # where to search for sources of missing dependencies)
+    my $result = parse($this,$fh,$outdir,$srcdir);
+    close $fh;
+    
+    # if the pdflatex process returned an error code but the parser did not
+    # figure out any problems that it knows how to correct, then we'll actually
+    # need to fail here
+    if( ${^CHILD_ERROR_NATIVE} 
+            && $result != BUILD_REBUILD )
+    {
+        $result = BUILD_FAIL;
+    }
+    
+    
+    
+    print_n 0, "restoring CWD to $cwd";
+    unless(chdir $cwd)
+    {
+        print_f "Failed to restore cwd: $cwd";
+        die;
+    }
+    
+    return $result;
 }
 
 
@@ -221,7 +268,21 @@ sub parse
                 print_e "   output: $outfile";                
                 
                 push(@figures,$outfile);
-                my $subtree= generate($outfile,$srcfile);
+                my $builder = Texmake::BuilderRegistry::findBuilder(
+                                                        $srcfile,$outfile);
+                unless($builder)
+                {
+                    print_f "Failed to find a suitable builder to generate " 
+                            ."graphics file $outfile from $srcfile";
+                    die;
+                }
+                
+                eval "require $builder";
+                my $subtree = 
+                    $builder->createTree( {
+                        'srcfile'=>$srcfile, 
+                        'outfile'=>$outfile} );
+                        
                 $node->dependsOn($subtree);
                 $status = BUILD_REBUILD;
             }
@@ -254,7 +315,7 @@ sub parse
             
             print_n 0, "Found missing bibliography";
             my $bibNode = 
-                new Texmake::DependencyGraph::Nodes::Bibtex($outdir,$srcdir);
+                new Texmake::Tools::Bibtex::Node($outdir,$srcdir);
             $node->dependsOn($bibNode);
             $node->{'bibnode'}  = $bibNode;
             $bibNode->{'dirty'} = 1;
@@ -334,7 +395,7 @@ sub parse
         if($status == DEP_NEW)
         {
             $symbol = "[+]";
-            my $newNode= new Texmake::DependencyGraph::Nodes::Source($file);
+            my $newNode= new Texmake::Tools::Source::Node($file);
             push(@newDepends,$newNode);
         }
         
@@ -360,132 +421,6 @@ sub parse
     
     return $status;
 }
-
-
-
-##  @class
-#   @brief  a node which uses pdflatex to compile a .tex document
-package Texmake::Tools::Pdflatex::Node;
-
-
-
-use Texmake ':all';
-use Texmake::Printer ':all';
-use Texmake::PrintIncrementer;
-
-use Texmake::Node;
-
-our @ISA = ('Texmake::Node');
-
-
-##  @cmethod object new($output,$srcdir)
-#   @brief   constructor, creates a new pdflatex node
-#   @param[in]  output  the output file which is created
-#   @param[in]  srcdir  the directory where the sources are located
-#
-#   The pdf builder makes a lot of assumptions. It assumes that there is a
-#   directory called $output.texmake which contains a file called root.tex
-#   which references the actual source document. The only piece of 
-#   extra information the builder needs is the source directory where it 
-#   should point pdflatex in addition to the build directory. This source 
-#   directory is also where the parser will look for missing dependencies
-#    
-sub new
-{
-    my $this;
-
-    # first, shift off the class name
-    shift;
-    
-    # this method requires two parameters
-    if( ($#_ +1) == 2 )
-    {
-        my $outdir      = shift;
-        my $srcdir      = shift;
-        
-        # create the base class object
-        $this = new Texmake::Node("$outdir/root.pdf");
-        
-        # we also need to store the source directory of this generated document
-        $this->{'srcdir'} = $srcdir;     
-        
-        # the bibliography node get's a special pointer so that the parser
-        # can mark the bibliography dirty if the output shows missing citations
-        $this->{'bibNode'} = undef;
-    }
-    else
-    {
-        die "Pdflatex node created with wrong argument list";
-    }
-    
-    bless($this);
-    return $this;
-}
-
-
-
-##  @method bool doBuild(void)
-#   @return    * 0 if the build was successful
-#              * 1 if if the build needs to be performed again
-#              * -1 if the build failed 
-sub build
-{
-    my $this        = shift;
-    my $outdir      = dirname($this->{'outfile'});
-    my $srcdir      = $this->{'srcdir'};
-    
-    print_n "In pdflatex node's build method";
-   
-    my $cwd         = getcwd();
-    print_n 0, "Changing to working directory $outdir";
-    unless(chdir $outdir)
-    {
-        print_f "Failed to change to build directory $outdir";
-        die;
-    }
-    
-    # generate the command to execute
-    my $cmd = "export TEXINPUTS=$srcdir:$outdir: "
-            ."&& pdflatex -interaction nonstopmode root.tex";   
-    my $fh;
-    
-    # open a pipe from the command to our process
-    open( $fh, '-|', $cmd);
-    
-    # create a parser object, the parser needs to know this node (so that it
-    # can append dependencies), the file handle of the process (so that it can 
-    # read the output), the output directory (so it knows where to put 
-    # generated files which are missing), and the source directory (so it knows
-    # where to search for sources of missing dependencies)
-    my $result = parse($this,$fh,$outdir,$srcdir);
-    close $fh;
-    
-    # if the pdflatex process returned an error code but the parser did not
-    # figure out any problems that it knows how to correct, then we'll actually
-    # need to fail here
-    if( ${^CHILD_ERROR_NATIVE} 
-            && $result != BUILD_REBUILD )
-    {
-        $result = BUILD_FAIL;
-    }
-    
-    
-    
-    print_n 0, "restoring CWD to $cwd";
-    unless(chdir $cwd)
-    {
-        print_f "Failed to restore cwd: $cwd";
-        die;
-    }
-    
-    return $result;
-}
-
-
-
-
-
-
 
 
 

@@ -6,7 +6,7 @@ use Cwd qw(getcwd abs_path);
 
 use Texmake::Printer qw(print_w print_f print_n print_e);
 use Texmake::PrintIncrementer;
-
+use Texmake::BuilderRegistry;
 
 
 
@@ -15,6 +15,8 @@ use Texmake::PrintIncrementer;
 # creates a new maker which holds the state of the current build process
 sub new()
 {
+    Texmake::BuilderRegistry::init();
+    
     my $this = 
     {
         'cache'         => undef,
