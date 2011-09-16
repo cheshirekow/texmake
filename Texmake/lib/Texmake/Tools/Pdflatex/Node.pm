@@ -329,12 +329,11 @@ sub parse
         # so we'll match strings like this. Whenver a citation is missing, 
         # we should mark bibtex for a run and rerun ourselves (though we'll
         # need some kind of flag to prevent it a second time)
-        if(/Citation `[^']+' on page \d+ undefined/)
+        if(/Citation `[^']+' on page \d+ undefined/ 
+                &&  $node->{'bibNode'} 
+                &&  $node->{'bibNode'}->{'run'} < 1 )
         {
-            if($node->{'bibNode'})
-            {
-                $node->{'bibNode'}->{'dirty'} = 1;
-            }
+            $node->{'bibNode'}->{'dirty'} = 1;
 
             # actually we wont specify the need for a rerun right here, because
             # we'll handle the bibtex node especially

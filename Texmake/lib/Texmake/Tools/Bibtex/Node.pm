@@ -61,7 +61,7 @@ sub build
     my $srcdir      = $this->{srcdir};
     
     print_n "In bibtex's node's build method";
-   
+    
     my $cwd         = getcwd();
     print_n 0, "Changing to working directory $outdir";
     unless(chdir $outdir)

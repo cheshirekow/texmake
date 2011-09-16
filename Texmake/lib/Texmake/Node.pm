@@ -30,7 +30,9 @@ sub new
     {
         'outfile'   => undef,
         'depends'   => undef,
-        'dirty'     => 0,
+        'dirty'     => 0,       # set to true if node needs to rebuild
+        'run'       => 0,       # counter for number of times node is rebuilt
+                                # in a single call to texmake
     };  
     
     # create an empty array and point to it as a data member
@@ -50,6 +52,20 @@ sub new
     
     bless($this);
     return $this;
+}
+
+
+sub initMake
+{
+    my $this    = shift;
+    my $depends = $this->{'depends'};
+    
+    $this->{'run'} = 0;
+    
+    foreach my $depends (@$depends)
+    {
+        $depends->initMake();
+    }
 }
 
 
@@ -152,6 +168,7 @@ sub evaluate
         print_n 0, "$file is dirty";
     
         my $status = $this->build();    
+        $this->{'run'}++;
         if( $status == BUILD_FAIL)
         {
             $retval = EVAL_FAIL;

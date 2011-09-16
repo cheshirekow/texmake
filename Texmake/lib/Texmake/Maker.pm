@@ -150,6 +150,9 @@ sub go()
         # convert the file xml to a perl object (a dependency graph in fact)
         my $xmldump = new XML::Dumper;
         my $node = $xmldump->xml2pl($dump);
+
+        # clear out run counts
+        $node->initMake();        
         
         # evaluate/build the node
         if($node->evaluate() == EVAL_FAIL)
