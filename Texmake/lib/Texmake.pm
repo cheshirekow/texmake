@@ -13,6 +13,9 @@ use constant BUILD_FAIL     => -1;
 use constant BUILD_SUCCESS  => 0;
 use constant BUILD_REBUILD  => 1;
 
+use constant DEP_DROP => -1;
+use constant DEP_KEEP => 0;
+use constant DEP_NEW  => 1;
 
 require Exporter;
 
@@ -33,6 +36,9 @@ our %EXPORT_TAGS = ( 'all' => [ qw(
 	BUILD_FAIL
 	BUILD_SUCCESS
 	BUILD_REBUILD
+	DEP_DROP
+	DEP_KEEP
+	DEP_NEW
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );

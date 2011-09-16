@@ -14,16 +14,16 @@ use Module::Load;
 use File::Basename;
 use Switch;
 use File::Path qw(make_path);
+use XML::Dumper;
 
 use Texmake::Printer qw(print_w print_f print_n print_e);
 use Texmake::PrintIncrementer;
-use Texmake::DependencyGraph::Node;
-use Texmake::Initializers::Pdflatex;
-use Texmake::Initializers::Latex;
-use Texmake::Initializers::Latexml;
+use Texmake::Node;
 
-
-
+our @builtInBuilders = 
+    qw(Pdflatex
+       );
+       
 our $singleton = undef;
 
 
@@ -37,11 +37,13 @@ sub new
     {
         'srcdir'  => undef,
         'outdir'  => abs_path('.'),
-        'srcdir'  => undef,
         'csrcdir' => undef,
         'coutdir' => undef,
         'stack'   => undef,
-        'targets' => undef
+        'targets' => undef,
+        'buildMap'=> {},
+        'srcTypes'=> {},
+        'outTypes'=> {},
     };
     
     # first, shift off the class name
@@ -72,6 +74,16 @@ sub new
     
     my @targets;
     $this->{'targets'} = \@targets;
+    
+    foreach my $builder (@builtInBuilders)
+    {
+        $builder    = 'Texmake::Tools::'.$builder;
+        eval "require $builder";
+        my $srcTypes= ($builder)->getSourceTypes();
+        my $outTypes= ($builder)->getOutputTypes();
+        
+        doRegisterBuilder($this,$builder,$srcTypes,$outTypes);
+    }
     
     bless($this); 
     
@@ -141,16 +153,18 @@ HERE
     print_n 0, "Targets found:\n------------------";
     foreach my $target( @$targets )
     {
-        my $output = $target->{'output'};
-        my $source = $target->{'source'};
+        my $output = $target->{'outfile'};
+        my $source = $target->{'srcfile'};
         
         print_e "($output,$source)";
     }
     
-    print_n 0, "Creating directories, rootfiles, and dependency graphs";
+    print_n 0, "Creating directories, and dependency graphs";
     foreach my $target( @$targets )
     {
-        my $output = $target->{'output'};
+        my $output = $target->{'outdir'} . '/' . $target->{'outfile'};
+        my $source = $target->{'srcdir'} . '/' . $target->{'srcfile'};
+        
         
         # the build directory is a folder with the same name as the output and
         # the literal string ".texmake" appended to it
@@ -180,26 +194,55 @@ HERE
                 print_f "Failed to create $build";
                 die;
             }
-            print_e "Creatined buildir $build";
+            print_e "Creating buildir $build";
         }
 
-        # parse the output file name into basename, directory, and suffix        
-        my ($basename,$directory,$suffix) = 
-            fileparse($output,qw(pdf dvi html xhtml));
-            
-        my $init;
-        # switch over the suffixes and create a dependency graph builder object
-        # for whichever one is actually needed
-        switch($suffix)
+        my $builder;
+        
+        # unless the user specified a builder, we need to search for one
+        if( $target->{'builder'})
         {
-            case "pdf"      {$init = new Texmake::Initializers::Pdflatex;}
-            case "dvi"      {$init = new Texmake::Initializers::Latex;}
-            case "html"     {$init = new Texmake::Initializers::Latexml;}
-            case "xhtml"    {$init = new Texmake::Initializers::Latexml;}
+            $builder = $target->{'builder'};
+        }
+        else
+        {
+            my $outTypes = $this->{'outTypes'};
+            my $srcTypes = $this->{'srcTypes'};
+    
+            # parse the output file name into basename, directory, and suffix        
+            my ($outBase,$outDir,$outSuffix) = fileparse($output,keys %$outTypes);
+            my ($srcBase,$srcDir,$srcSuffix) = fileparse($source,keys %$srcTypes);
+            
+            my $buildMap = $this->{'buildMap'};
+        
+            unless( exists $buildMap->{$srcSuffix} )
+            {
+                print_f "No builder for input $source";
+                die;
+            }
+            
+            my $srcMap  = $buildMap->{$srcSuffix};
+            
+            unless( exists $srcMap->{$outSuffix} )
+            {
+                print_f "No builder for output $output, input $source";
+                die;
+            }
+            
+            $builder = $srcMap->{$outSuffix};
         }
         
-        # tell the initializer to do it's thing
-        $init->go($target);
+        my $tree    = ${builder}->createTree($target);
+
+        my $xmldump = new XML::Dumper();
+    
+        print_e "Generating $build/dependencies.xml";
+        my $fh;
+        open($fh, '>', "$build/dependencies.xml") 
+                or die "Failed to open $build/dependencies.xml $!";
+        
+        print $fh $xmldump->pl2xml($tree);
+        close $fh;
     }
 }
 
@@ -219,19 +262,27 @@ sub doAddTarget
 {
     my $this    = shift;
     my $targets = $this->{'targets'};
-    my $output  = $this->{'coutdir'}."/".shift;
-    my $source  = $this->{'csrcdir'}."/".shift;
-    my $header  = @_ ? shift : "";
-    my $footer  = @_ ? shift : "";
+    my $param   = shift;
+    my $buildMap= $this->{'buildMap'};
+    my $target  = {};
     
-    my $target = {
-        'output' => $output,
-        'source' => $source, 
-        'header' => $header,
-        'footer' => $footer
-    };
+    if( ref($param) eq "HASH" )
+    {
+        $target = $param;
+    }
+    else
+    {
+        $target->{'outfile'} = $param;
+        $target->{'srcfile'} = shift;        
+    }
     
-    push(@$targets, $target);
+    $target->{'outdir'} = $this->{'coutdir'};
+    $target->{'srcdir'} = $this->{'csrcdir'};
+    
+    my $output = $target->{'outfile'};
+    my $source = $target->{'srcfile'};
+    
+    push(@$targets,$target);
     
     print_n 0, <<"HERE";
 Adding Target
@@ -264,6 +315,48 @@ HERE
     
     my $stack = $this->{'stack'};
     push(@$stack,$stackframe);
+}
+
+
+
+sub doRegisterBuilder
+{
+    my $this        = shift;
+    my $builder     = shift;
+    my $srcTypes    = shift;
+    my $outTypes    = shift;
+    my $buildMap    = $this->{'buildMap'};
+    my $srcHash     = $this->{'srcTypes'};
+    my $outHash     = $this->{'outTypes'};
+    
+    print_n 0, "Trying to register builder $builder";
+    
+    foreach my $src (@$srcTypes)
+    {
+        $srcHash->{$src} = 1;
+        
+        unless(exists $buildMap->{$src})
+        {
+            $buildMap->{$src} = {};
+        }
+        my $srcMap = $buildMap->{$src};
+        
+        foreach my $out (@$outTypes)
+        {
+            $outHash->{$out} = 1;
+            
+            if(exists $srcHash->{$out})
+            {
+                print_w "Overriding $src to $out builder " . 
+                            $srcHash->{$out} . " with $builder";
+            }
+            else
+            {
+                print_n 0, "Registering builder $builder for $src -> $out";
+            }
+            $srcMap->{$out} = $builder;
+        }
+    }
 }
 
 

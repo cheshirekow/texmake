@@ -14,7 +14,6 @@ use XML::Dumper;
 use Texmake qw(EVAL_FAIL);
 use Texmake::Printer qw(print_w print_f print_n print_e);
 use Texmake::PrintIncrementer;
-use Texmake::Builder;
 
 
 
