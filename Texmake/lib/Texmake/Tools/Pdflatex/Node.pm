@@ -89,6 +89,8 @@ sub build
     my $outdir      = dirname($this->{'outfile'});
     my $srcdir      = $this->{'srcdir'};
     
+    my $intermediates = $this->{'stateFiles'};
+    
     print_n "In pdflatex node's build method";
    
     my $cwd         = getcwd();
@@ -151,7 +153,7 @@ sub parse
     my $srcdir  = shift;
     my $status  = BUILD_SUCCESS;
     my @loaded  = ();
-    my @intermediates = ();
+    my @states  = ();
     my @figures = ();
     
     print_n 0, "Parser::PDFLatex is reading from fh: $fh";
@@ -181,7 +183,7 @@ sub parse
             my($base,$dir,$suffix) = fileparse($1,@stateTypes);
             if($suffix)
             {
-                push(@intermediates,$1);
+                push(@states,$1);
             }
             
             # otherwise we'll store it in the list of loaded dependencies
@@ -192,7 +194,7 @@ sub parse
                 ($base,$dir,$suffix) = fileparse($1,'.bbl');
                 if($suffix)
                 {
-                    push(@intermediates,$1);
+                    push(@states,$1);
                 }
                 push(@loaded,$1);
             }
@@ -339,7 +341,7 @@ sub parse
             }
             
             push(@loaded,"$outdir/$1.bbl");
-            push(@intermediates,"$outdir/$1.bbl");
+            push(@states,"$outdir/$1.bbl");
             
             print_n 0, "Found missing bibliography";
             my $bibNode = 
@@ -447,27 +449,27 @@ sub parse
     
     
     
-    my %inters;
-    foreach my $file (@intermediates)
+    my %stateFiles;
+    foreach my $file (@states)
     {
-        $inters{$file} = {
+        $stateFiles{$file} = {
             'state' => DEP_NEW,
             'node'  => undef,  
         };
     }
     
     
-    my $nodeIntermediates = $node->{'intermediates'};
-    foreach my $node (@$nodeIntermediates)
+    my $nodeStates = $node->{'stateFiles'};
+    foreach my $node (@$nodeStates)
     {
-        if( exists $inters{$node->{'outfile'}} )
+        if( exists $stateFiles{$node->{'outfile'}} )
         {
-            $inters{$node->{'outfile'}}->{'state'} = DEP_KEEP;
-            $inters{$node->{'outfile'}}->{'node'}  = $node;
+            $stateFiles{$node->{'outfile'}}->{'state'} = DEP_KEEP;
+            $stateFiles{$node->{'outfile'}}->{'node'}  = $node;
         }
         else
         {
-            $inters{$node->{'outfile'}} = {
+            $stateFiles{$node->{'outfile'}} = {
                 'state' => DEP_DROP,
                 'node'  => $node
             };
@@ -475,23 +477,23 @@ sub parse
     }
     
     print_n 0, "Intermediate Files:\n---------------";
-    my @newIntermediates;
-    foreach my $file (keys %inters)
+    my @newStates;
+    foreach my $file (keys %stateFiles)
     {
-        my $status = $inters{$file}->{'state'};
+        my $status = $stateFiles{$file}->{'state'};
         my $symbol = "[?]";
 
         if($status == DEP_NEW)
         {
             $symbol = "[+]";
             my $newNode= new Texmake::Tools::TexState::Node($file);
-            push(@newIntermediates,$newNode);
+            push(@newStates,$newNode);
         }
         
         elsif($status == DEP_KEEP)
         {
             $symbol = "[ ]";
-            push(@newIntermediates,$inters{$file}->{'node'});
+            push(@newStates,$stateFiles{$file}->{'node'});
         }
         
         else
@@ -502,14 +504,16 @@ sub parse
         print_e $symbol . "   $file";
     }
     
-    $node->{'intermediates'} = \@newIntermediates;
+    $node->{'stateFiles'} = \@newStates;
     
     
     
     
     # just to make sure
-    print_n 0, "There are $#newDepends dependencies and "
-                ."$#newIntermediates intermediates identified in this build";
+    my $nDepends    = $#newDepends + 1;
+    my $nStates     = $#newStates + 1;
+    print_n 0, "There are $nDepends dependent files and "
+                ."$nStates state files identified in this build";
     
     return $status;
 }
