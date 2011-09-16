@@ -9,7 +9,7 @@ use Switch;
 use File::stat;
 use File::Copy;
 use File::Path qw(make_path);
-use File::Basename qw(dirname basename);
+use File::Basename qw(dirname basename fileparse);
 use Time::localtime;
 use Cwd qw(getcwd);
 
@@ -21,9 +21,15 @@ use Texmake::Node;
 use Texmake::Tools::Source::Node;
 use Texmake::Tools::Copy::Node;
 use Texmake::Tools::Bibtex::Node;
-use Texmake::Tools::TexRootMaker::Node;
+use Texmake::Tools::TexRootMaker::Node; 
+use Texmake::Tools::TexState::Node;
 
 our @ISA = ('Texmake::Node');
+
+
+# file types that indicate an unstable document, but who shouldn't 
+# instigate an intial build
+our @stateTypes = qw(.aux .toc);
 
 
 ##  @cmethod object new($output,$srcdir)
@@ -59,7 +65,8 @@ sub new
         
         # the bibliography node get's a special pointer so that the parser
         # can mark the bibliography dirty if the output shows missing citations
-        $this->{'bibNode'} = undef;
+        $this->{'bibNode'}      = undef;
+        $this->{'stateFiles'}   = [];
     }
     else
     {
@@ -117,8 +124,6 @@ sub build
         $result = BUILD_FAIL;
     }
     
-    
-    
     print_n 0, "restoring CWD to $cwd";
     unless(chdir $cwd)
     {
@@ -126,10 +131,14 @@ sub build
         die;
     }
     
+    # special bibtex call, wont actually update the .bbl file time
+    if($this->{'bibNode'})
+    {
+        $this->{'bibNode'}->build(1);
+    }
+    
     return $result;
 }
-
-
 
 
 
@@ -142,6 +151,7 @@ sub parse
     my $srcdir  = shift;
     my $status  = BUILD_SUCCESS;
     my @loaded  = ();
+    my @intermediates = ();
     my @figures = ();
     
     print_n 0, "Parser::PDFLatex is reading from fh: $fh";
@@ -160,13 +170,30 @@ sub parse
         # so are a number of other things, in any case, we want a list of all
         # the files that latex needs to build this document so we'll match for
         # any text following a parenthesis
-        if(/\(([^\)]+)/)
+        # so every time we match something following the opening of a 
+        # parenthesis, we'll check to see if it exist, and if it does, then
+        # we'll say it's a file that was loaded
+        if(/\(([^\)]+)/ && -e $1)
         {
-            # so every time we match something following the opening of a 
-            # parenthesis, we'll check to see if it exist, and if it does, then
-            # we'll say it's a file that was loaded
-            if(-e $1)
+            # if the file is one of the known intermediate types, files used
+            # by latex just to maintain state, then we'll store it in a list of
+            # intermediates
+            my($base,$dir,$suffix) = fileparse($1,@stateTypes);
+            if($suffix)
             {
+                push(@intermediates,$1);
+            }
+            
+            # otherwise we'll store it in the list of loaded dependencies
+            else
+            {
+                # except for the bibliography file, which belongs to both 
+                # lists
+                ($base,$dir,$suffix) = fileparse($1,'.bbl');
+                if($suffix)
+                {
+                    push(@intermediates,$1);
+                }
                 push(@loaded,$1);
             }
         }
@@ -312,12 +339,13 @@ sub parse
             }
             
             push(@loaded,"$outdir/$1.bbl");
+            push(@intermediates,"$outdir/$1.bbl");
             
             print_n 0, "Found missing bibliography";
             my $bibNode = 
                 new Texmake::Tools::Bibtex::Node($outdir,$srcdir);
             $node->dependsOn($bibNode);
-            $node->{'bibnode'}  = $bibNode;
+            $node->{'bibNode'}  = $bibNode;
             $bibNode->{'dirty'} = 1;
             
             $status = BUILD_REBUILD;
@@ -360,7 +388,7 @@ sub parse
             'node'  => undef
         }
     }
-
+    
     # now we'll iterate over current dependencies and see how many of them were
     # in the list of files loaded
     my $nodeDepends = $node->{'depends'};
@@ -415,8 +443,73 @@ sub parse
     # now reassign the dependency list for this node
     $node->{'depends'} = \@newDepends;
     
+    
+    
+    
+    
+    my %inters;
+    foreach my $file (@intermediates)
+    {
+        $inters{$file} = {
+            'state' => DEP_NEW,
+            'node'  => undef,  
+        };
+    }
+    
+    
+    my $nodeIntermediates = $node->{'intermediates'};
+    foreach my $node (@$nodeIntermediates)
+    {
+        if( exists $inters{$node->{'outfile'}} )
+        {
+            $inters{$node->{'outfile'}}->{'state'} = DEP_KEEP;
+            $inters{$node->{'outfile'}}->{'node'}  = $node;
+        }
+        else
+        {
+            $inters{$node->{'outfile'}} = {
+                'state' => DEP_DROP,
+                'node'  => $node
+            };
+        }
+    }
+    
+    print_n 0, "Intermediate Files:\n---------------";
+    my @newIntermediates;
+    foreach my $file (keys %inters)
+    {
+        my $status = $inters{$file}->{'state'};
+        my $symbol = "[?]";
+
+        if($status == DEP_NEW)
+        {
+            $symbol = "[+]";
+            my $newNode= new Texmake::Tools::TexState::Node($file);
+            push(@newIntermediates,$newNode);
+        }
+        
+        elsif($status == DEP_KEEP)
+        {
+            $symbol = "[ ]";
+            push(@newIntermediates,$inters{$file}->{'node'});
+        }
+        
+        else
+        {
+            $symbol = "[x]";
+        }
+        
+        print_e $symbol . "   $file";
+    }
+    
+    $node->{'intermediates'} = \@newIntermediates;
+    
+    
+    
+    
     # just to make sure
-    print_n 0, "There are $#newDepends dependencies identified in this build";
+    print_n 0, "There are $#newDepends dependencies and "
+                ."$#newIntermediates intermediates identified in this build";
     
     return $status;
 }

@@ -7,9 +7,9 @@ use strict;
 
 use Switch;
 use File::stat;
+use Time::localtime;
 use File::Copy;
 use File::Basename qw(dirname);
-use Time::localtime;
 use Cwd qw(getcwd);
 
 use Texmake ':all';
@@ -57,6 +57,7 @@ sub new
 sub build
 {
     my $this        = shift;
+    my $special     = shift;
     my $outdir      = dirname($this->{'outfile'});
     my $srcdir      = $this->{srcdir};
     
@@ -73,6 +74,22 @@ sub build
     my $cmd = "export BIBINPUTS=$srcdir:$outdir: "
                 ."&& bibtex root";   
     my $fh;
+   
+   
+    my ($mtime,$atime);
+    if($special && -e 'root.bbl')
+    {
+       $mtime = stat('root.bbl')->mtime;
+       $atime = stat('root.bbl')->atime;
+    }
+    
+    # if the file doesn't exist we don't want to restore non-existant 
+    # modified/accessed times
+    else
+    {
+        $special = 0;
+    }
+       
     
     # open a pipe from the command to our process
     open( $fh, '-|', $cmd);
@@ -84,6 +101,13 @@ sub build
     # where to search for sources of missing dependencies)
     my $result = parse($this,$fh,$outdir,$srcdir);
     close $fh;
+    
+    # if this is a special build, then we need to restore the modified/accessed
+    # times of the bbl files
+    unless($special)
+    {
+        utime $atime, $mtime, 'root.bbl';
+    }
     
     # if the pdflatex process returned an error code but the parser did not
     # figure out any problems that it knows how to correct, then we'll actually
