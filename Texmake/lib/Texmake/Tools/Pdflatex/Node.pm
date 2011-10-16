@@ -112,8 +112,12 @@ sub build
             ."&& pdflatex -interaction nonstopmode root.tex";   
     my $fh;
     
+    print_n 0, "Executing the following command: \n$cmd";
+    
     # open a pipe from the command to our process
     open( $fh, '-|', $cmd);
+    
+    
     
     # create a parser object, the parser needs to know this node (so that it
     # can append dependencies), the file handle of the process (so that it can 

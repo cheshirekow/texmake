@@ -18,6 +18,7 @@ our %EXPORT_TAGS = ( 'all' => [ qw(
     print_f
     print_n
     print_e
+    close
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
@@ -28,7 +29,7 @@ our @EXPORT = qw(
 
 our $VERSION = '0.01';
 
-
+our $logfh = 0;
 
 
 our $tab    = "";
@@ -67,6 +68,13 @@ sub print_e
 
 sub _print
 {
+    unless($logfh)
+    {
+        my $fh;
+        open($fh,'>>', 'texmake.log' );
+        $logfh = $fh;
+    }
+    
     my $prefix  = shift;
 
     my $level   = shift;
@@ -87,14 +95,17 @@ sub _print
     
     # print the prefix
     print STDERR $prefix;
+    print $logfh $prefix;
 
     my @array   = @_;
     foreach (@array)
     {
         s/\n/\n$ten$tab/g;
         print STDERR $_;
+        print $logfh $_;
     }
     print STDERR "\n";
+    print $logfh "\n";
 }
 
 sub setDebug
@@ -104,6 +115,13 @@ sub setDebug
     
     my $value = shift;
     $debug = $value;
+}
+
+
+sub close
+{
+    close $logfh;
+    $logfh = 0;
 }
 
 

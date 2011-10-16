@@ -95,6 +95,8 @@ switch($command)
 }
 
 
+Texmake::Printer::close();
+
 
 sub print_help
 {
