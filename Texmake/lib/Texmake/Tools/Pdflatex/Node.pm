@@ -292,7 +292,7 @@ sub parse
             # file which is missing 
             my $srchbase= basename($missing);
             
-            print_n 0, "Searching for it in $srchdir";
+            print_n 0, "Searching for it as $srchbase in $srchdir";
 
             # open the search directory and read in a list of files in it
             my $dh;
