@@ -24,6 +24,10 @@ our $builtInBuilders =
             'srcTypes'  => [ qw[.tex] ], 
             'outTypes'  => [ qw[.pdf] ], 
         },
+        'Latexml'       =>{
+            'srcTypes'  => [ qw[.tex] ],
+            'outTypes'  => [ qw[.html .xhtml] ],  
+        },
         'Svg2eps'       =>{ 
             'srcTypes'  => [ qw[.svg] ], 
             'outTypes'  => [ qw[.eps] ],
