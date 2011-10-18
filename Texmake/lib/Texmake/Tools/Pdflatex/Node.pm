@@ -209,8 +209,10 @@ sub parse
         # so every time we match something following the opening of a 
         # parenthesis, we'll check to see if it exist, and if it does, then
         # we'll say it's a file that was loaded
-        if(/\(([^\)]+)/ && -e $1)
+        if(/\(([^\)\s]+)/ && -e $1)
         {
+            print_n 0, "pdflatex parser: pdflatex is processing file $1";
+            
             # if the file is one of the known intermediate types, files used
             # by latex just to maintain state, then we'll store it in a list of
             # intermediates
