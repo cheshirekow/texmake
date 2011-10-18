@@ -189,17 +189,69 @@ sub parse
     my @loaded  = ();
     my @states  = ();
     my @figures = ();
+    my $warnFlag    = 0;
+    my $errorFlag   = 0;
+    
+    my $msgSplit    = 0;
+    my $msgText     = "";
+    my $msgContext  = "";
     
     print_n 0, "Parser::PDFLatex is reading from fh: $fh";
     
     while(<$fh>)
     {
         chomp;
+        
         print_e $_;
         
         if(/^!/)
         {
             print_w $_;
+        }
+        
+        # if underlying pdftex is giving us a warning we need to print it out
+        # as well
+        if(/pdfTeX warning(.+)/)
+        {
+            $warnFlag = 1;
+            $msgSplit = 0;
+            $msgText  = $1;
+            $msgContext = "";
+        }
+        
+        # if we're getting a line number then this is the end of a warning or
+        # error message
+        elsif(/l\.(\d+)/)
+        {
+            if($warnFlag)
+            {
+                $warnFlag = 0;
+            }
+            
+            if($errorFlag)
+            {
+                $errorFlag = 0;
+            }
+            
+            print_w $msgText;
+            print_w "context: " . $msgContext;
+            print_w "at " . $loaded[-1] . " line $1";
+        }
+        else
+        {
+            if($warnFlag)
+            {   
+                unless( /\S/ ){ $msgSplit = 1;}
+                
+                if($msgSplit)
+                {
+                    $msgContext .= $_ . "\n";
+                }
+                else
+                {
+                    $msgText .= $_;
+                }
+            }
         }
         
         # when files are loaded they're printed in parentheses, unfortunately
@@ -211,7 +263,7 @@ sub parse
         # we'll say it's a file that was loaded
         if(/\(([^\)\s]+)/ && -e $1)
         {
-            print_n 0, "pdflatex parser: pdflatex is processing file $1";
+            print_n 0, "processing file $1";
             
             # if the file is one of the known intermediate types, files used
             # by latex just to maintain state, then we'll store it in a list of
