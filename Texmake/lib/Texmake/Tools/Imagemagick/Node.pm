@@ -27,6 +27,7 @@ our @ISA = ('Texmake::Node');
 #    
 sub new
 {
+    print_n 0, "Creating new ImageMagick Node";
     my $this;
 
     # first, shift off the class name

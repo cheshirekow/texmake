@@ -249,7 +249,7 @@ sub parse
             if($found)
             {
                 my $srcdir = $srchdir;
-                my $outfile= "$outdir/$missing.png";
+                my $outfile= "$builddir/$missing.png";
                 my $srcfile= "$srcdir/$found";
                 print_n 0, "Generating a new dependency";
                 print_e "   source: $srcfile";
