@@ -197,6 +197,12 @@ sub parse
         }
         
         
+        # if processing an image file it will match these two
+        if(/LaTeXML::Post::Graphics/ && /Processing (\S+)/ && -e $1)
+        {
+            push(@figures,$1);
+        }
+        
         # if latex is looking for an include file or an image file and it cannot
         # find it in the source directory it will print an error like 
         # "File `fig/a/b' not found" so we'll match strings like this
