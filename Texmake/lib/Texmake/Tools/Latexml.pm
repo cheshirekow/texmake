@@ -84,7 +84,7 @@ sub createTree
     if($ext eq "html")
         {$postNode  =  ($pkg.'Latexml::Html::Node')->new($outdir,$srcdir);}
     else
-        {$postNode  =  ($pkg.'Latexml::XHtml::Node')->new($outdir,$srcdir);}
+        {$postNode  =  ($pkg.'Latexml::Xhtml::Node')->new($outdir,$srcdir);}
     
 
 

@@ -1,6 +1,6 @@
 ##  @class
 #   @brief  a node which uses pdflatex to compile a .tex document
-package Texmake::Tools::Latexml::XHml::Node;
+package Texmake::Tools::Latexml::Xhtml::Node;
 
 
 use strict;
@@ -100,10 +100,8 @@ sub build
     }
     
     # generate the command to execute
-    my $cmd = "latexml --destination=root.xml ".
-                            "--path=$outdir ". 
-                            "--path=$srcdir ".
-                            " --verbose root.tex";   
+    my $cmd = "latexmlpost --destination=root.xhtml".
+                            " --verbose root.xml";   
     my $fh;
     
     print_n 0, "Executing the following command: \n$cmd";

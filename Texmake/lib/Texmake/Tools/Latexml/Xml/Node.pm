@@ -11,7 +11,7 @@ use File::Copy;
 use File::Path qw(make_path);
 use File::Basename qw(dirname basename fileparse);
 use Time::localtime;
-use Cwd qw(getcwd);
+use Cwd qw(getcwd realpath);
 
 use Texmake ':all';
 use Texmake::Printer ':all';
@@ -103,7 +103,7 @@ sub build
     my $cmd = "latexml --destination=root.xml ".
                             "--path=$outdir ". 
                             "--path=$srcdir ".
-                            " --verbose root.tex";   
+                            " --verbose root.tex 2>&1";   
     my $fh;
     
     print_n 0, "Executing the following command: \n$cmd";
@@ -158,7 +158,7 @@ sub parse
     my $msgText     = "";
     my $msgContext  = "";
     
-    print_n 0, "Parser::Latexml is reading from fh: $fh";
+    print_n 0, "Parser::Latexml::Xml::Node is reading from fh: $fh";
     
     while(<$fh>)
     {
@@ -166,11 +166,30 @@ sub parse
         
         print_e $_;
         
-        if(/^!/)
+        if(/^Error:/)
         {
-            print_w $_;
+            print_f $_;
         }
         
+        
+        # when files are loaded they're printed in parentheses, unfortunately
+        # so are a number of other things, in any case, we want a list of all
+        # the files that latex needs to build this document so we'll match for
+        # any text following a parenthesis
+        # so every time we match something following the opening of a 
+        # parenthesis, we'll check to see if it exist, and if it does, then
+        # we'll say it's a file that was loaded
+        if(/(Loading|Processing) (.+)\.\.\./ && -e $2)
+        {
+            print_n 0, "$1 file $2";
+            
+            my $realPath = realpath($2);
+            
+            print_n 0, "   realpath: $realPath";
+            
+            # we'll store it in the list of loaded dependencies
+            push(@loaded,$realPath);
+        }
     }
         
     

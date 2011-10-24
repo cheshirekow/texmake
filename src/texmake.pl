@@ -14,5 +14,6 @@
 #
 
 addTarget( 'test.pdf', 'test.tex' );
+addTarget( 'test.xhtml', 'test.tex' );
 
 addSubdirectory('a');
