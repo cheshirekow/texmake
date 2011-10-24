@@ -22,6 +22,11 @@ our $builtInBuilders =
             'outTypes'  => [ qw[.png .jpg .eps .pdf] ], 
         },
         {
+            'package'   =>  'Imagemagick', 
+            'srcTypes'  => [ qw[.svg ] ],
+            'outTypes'  => [ qw[.png ] ], 
+        },
+        {
             'package'   =>  'Pdflatex', 
             'srcTypes'  => [ qw[.tex] ], 
             'outTypes'  => [ qw[.pdf] ], 
