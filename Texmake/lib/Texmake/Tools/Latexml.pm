@@ -76,26 +76,24 @@ sub createTree
     }
      
     my $pkg         = "Texmake::Tools::";
-    my $linkNode    = ($pkg.'Symlink::Node')->new($output,$buildout);    
     my $xmlNode     = ($pkg.'Latexml::Xml::Node')->new($outdir,$srcdir);
     my $postNode;
     my $rootfileNode= ($pkg.'TexRootMaker::Node')->new($params);
     
     if($ext eq "html")
-        {$postNode  =  ($pkg.'Latexml::Html::Node')->new($outdir,$srcdir);}
+        {$postNode  =  ($pkg.'Latexml::Html::Node')->new($output,$srcdir);}
     else
-        {$postNode  =  ($pkg.'Latexml::Xhtml::Node')->new($outdir,$srcdir);}
+        {$postNode  =  ($pkg.'Latexml::Xhtml::Node')->new($output,$srcdir);}
     
 
 
     # note:
     # we don't need to explicitly add the source file since the scanner will
     # pick that up during the first build
-    $linkNode->dependsOn($postNode);
     $postNode->dependsOn($xmlNode);
     $xmlNode->dependsOn($rootfileNode);
     
-    return $linkNode;
+    return $postNode;
 }
 
 

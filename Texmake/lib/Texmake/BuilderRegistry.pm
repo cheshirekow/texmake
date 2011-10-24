@@ -15,28 +15,33 @@ use Texmake::LatexmlBuilder;
 
 
 our $builtInBuilders = 
-    {
-        'Imagemagick'   =>{ 
+    [
+        {
+            'package'   =>  'Imagemagick', 
             'srcTypes'  => [ qw[.png .jpg .eps .pdf] ],
             'outTypes'  => [ qw[.png .jpg .eps .pdf] ], 
         },
-        'Pdflatex'      =>{ 
+        {
+            'package'   =>  'Pdflatex', 
             'srcTypes'  => [ qw[.tex] ], 
             'outTypes'  => [ qw[.pdf] ], 
         },
-        'Latexml'       =>{
+        {
+            'package'   => 'Latexml',
             'srcTypes'  => [ qw[.tex] ],
             'outTypes'  => [ qw[.html .xhtml] ],  
         },
-        'Svg2eps'       =>{ 
+        {
+            'package'   => 'Svg2eps', 
             'srcTypes'  => [ qw[.svg] ], 
             'outTypes'  => [ qw[.eps] ],
         },
-        'Svg2pdf'       =>{ 
+        {
+            'package'   => 'Svg2pdf', 
             'srcTypes'  => [ qw[.svg] ], 
             'outTypes'  => [ qw[.pdf] ],
-        },
-    };
+        }
+    ];
 
 our $srcStore = {};
 our $outStore = {};
@@ -101,11 +106,11 @@ sub init
 {
     print_n 0, "Initializing builder registry:\n----------------------";
     
-    foreach my $builder (keys %$builtInBuilders )
+    foreach my $builder (@$builtInBuilders )
     {
-        registerBuilder('Texmake::Tools::'.$builder,
-            $builtInBuilders->{$builder}->{'srcTypes'},
-            $builtInBuilders->{$builder}->{'outTypes'});
+        registerBuilder('Texmake::Tools::'.$builder->{'package'},
+            $builder->{'srcTypes'},
+            $builder->{'outTypes'});
     }
     
     print_e " ";

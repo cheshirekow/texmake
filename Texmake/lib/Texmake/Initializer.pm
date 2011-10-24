@@ -7,7 +7,7 @@ package Texmake::Initializer;
 
 use strict;
 
-use Cwd qw(getcwd abs_path);
+use Cwd qw(getcwd abs_path realpath);
 
 use Module::Load;
 
@@ -35,7 +35,7 @@ sub new
     my $this = 
     {
         'srcdir'  => undef,
-        'outdir'  => abs_path('.'),
+        'outdir'  => realpath('.'),
         'csrcdir' => undef,
         'coutdir' => undef,
         'stack'   => undef,
@@ -55,13 +55,13 @@ sub new
 
     # the parameter is the source path   
     my $path = shift;
-    $this->{'srcdir'}  = abs_path($path);
+    $this->{'srcdir'}  = realpath($path);
 
     # we'll store the current directory in a LIFO queue (stack) so that we do
     # depth first search over the input directories    
     my $stackframe = {
-        'outdir'   => $this->{'outdir'} . "/.",
-        'srcdir'   => $this->{'srcdir'} . "/.",  
+        'outdir'   => $this->{'outdir'},
+        'srcdir'   => $this->{'srcdir'},  
     };
     
     my @stack;
