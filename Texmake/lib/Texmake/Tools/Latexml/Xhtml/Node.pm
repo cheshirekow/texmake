@@ -125,8 +125,9 @@ sub build
     }
     
     # generate the command to execute
-    my $cmd = "latexmlpost --destination=index.xhtml".
-                            " --verbose $builddir/root.xml 2>&1";   
+    my $cmd = "latexmlpost --destination=index.xhtml ".
+                            "--verbose --verbose ".
+                            "$builddir/root.xml 2>&1";   
     my $fh;
     
     print_n 0, "Executing the following command: \n$cmd";

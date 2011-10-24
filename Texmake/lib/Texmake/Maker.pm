@@ -11,7 +11,7 @@ use File::Path qw(make_path);
 use Switch;
 use XML::Dumper;
 
-use Texmake qw(EVAL_FAIL);
+use Texmake qw(EVAL_FAIL EVAL_BUILDME);
 use Texmake::Printer qw(print_w print_f print_n print_e);
 use Texmake::PrintIncrementer;
 use Texmake::BuilderRegistry;
@@ -155,6 +155,13 @@ sub go()
         $node->initMake();        
         
         # evaluate/build the node
+        my $result = EVAL_BUILDME;
+        while( $result == EVAL_BUILDME )
+        {
+            $result = $node->evaluate();
+        }
+        
+        
         if($node->evaluate() == EVAL_FAIL)
         {
             print_f "Build failed";
