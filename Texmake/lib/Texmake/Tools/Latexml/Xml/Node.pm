@@ -103,7 +103,8 @@ sub build
     my $cmd = "latexml --destination=root.xml ".
                             "--path=$outdir ". 
                             "--path=$srcdir ".
-                            " --verbose root.tex 2>&1";   
+                            " --verbose --verbose ".
+                            " root.tex 2>&1";   
     my $fh;
     
     print_n 0, "Executing the following command: \n$cmd";
@@ -169,6 +170,19 @@ sub parse
         if(/^Error:/)
         {
             print_f $_;
+        }
+        
+        # if we get a trace with the bibliography files we'll need to add those
+        # to our dependency list
+        if(/Texmake Bibliographies: (.+)/)
+        {
+            print_n 0, <<"HERE"
+            
+            
+        Bibliographies: $1        
+            
+            
+HERE
         }
         
         

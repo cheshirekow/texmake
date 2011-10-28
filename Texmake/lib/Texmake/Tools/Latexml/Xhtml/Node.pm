@@ -127,6 +127,7 @@ sub build
     # generate the command to execute
     my $cmd = "latexmlpost --destination=index.xhtml ".
                             "--verbose --verbose ".
+                            "--novalidate ".
                             "$builddir/root.xml 2>&1";   
     my $fh;
     
@@ -195,7 +196,6 @@ sub parse
         {
             print_w $_;
         }
-        
         
         # if processing an image file it will match these two
         if(/LaTeXML::Post::Graphics/ && /Processing (\S+)/ && -e $1)

@@ -74,6 +74,13 @@ sub build
     foreach my $file (@$files)
     {
         $file = $this->{'srcdir'} . '/' . $file;
+        print $fh <<'HERE';
+\let\texmakebibliography\bibliography
+\renewcommand{\bibliography}[1]{ %
+    \typeout{Texmake Bibliographies: #1} %
+    \texmakebibliography{#1}     %
+}    
+HERE
         print $fh "\\input{$file}\n";
     }
     

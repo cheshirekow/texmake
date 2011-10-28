@@ -7,7 +7,6 @@ use Texmake::Filter;
 use Texmake::Colorizer;
 use Texmake::Initializer;
 use Texmake::Maker;
-use Texmake::Builder;
 use Texmake::Printer qw(print_w print_e print_f print_n);
 
 # first, make sure that we have at least one argument
