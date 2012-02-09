@@ -13,7 +13,7 @@
 # +subdir2
 #
 
-addTarget( 'test.pdf', 'test.tex' );
-addTarget( 'test.xhtml', 'test.tex' );
+addTarget( 'texmake.pdf', 'texmake.tex' );
+addTarget( 'texmake.xhtml', 'texmake.tex' );
 
 addSubdirectory('a');
