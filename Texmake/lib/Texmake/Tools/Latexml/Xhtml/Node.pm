@@ -51,19 +51,21 @@ sub new
     # first, shift off the class name
     shift;
     
-    # this method requires two parameters
-    if( ($#_ +1) == 2 )
+    # this method requires two or three parameters
+    if( ($#_ +1) == 2 || ($#_ +1) == 3 )
     {
         my $outdir      = shift;
         my $builddir    = "$outdir.texmake";
         my $srcdir      = shift;
+        my $options     = shift;
         
         # create the base class object
         $this = new Texmake::Node("$outdir");
         
         # we also need to store the source directory of this generated document
         $this->{'builddir'} = $builddir;     
-        $this->{'srcdir'} = $srcdir;
+        $this->{'srcdir'}   = $srcdir;
+        $this->{'options'}  = $options;
         
         # the bibliography node get's a special pointer so that the parser
         # can mark the bibliography dirty if the output shows missing citations
@@ -90,6 +92,7 @@ sub build
     my $outdir      = $this->{'outfile'};
     my $builddir    = $this->{'builddir'};
     my $srcdir      = $this->{'srcdir'};
+    my $options     = $this->{'options'};
     my $result      = BUILD_SUCCESS;
     
     print_n "In Latexml::Xhtml node's build method";
@@ -128,6 +131,7 @@ sub build
     my $cmd = "latexmlpost --destination=index.xhtml ".
                             "--verbose --verbose ".
                             "--novalidate ".
+                            $options . " " . 
                             "$builddir/root.xml 2>&1";   
     my $fh;
     

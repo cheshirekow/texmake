@@ -65,7 +65,12 @@ sub new
         
         # the bibliography node get's a special pointer so that the parser
         # can mark the bibliography dirty if the output shows missing citations
-        $this->{'bibNode'}      = undef;
+        $this->{'bibNode'} = undef;
+        
+        # the latexmlpost node (either Xhtml::Node or Html::Node) which is
+        # the parent of this node gets a special pointer because we need to
+        # tell it who it's bibliographies are
+        $this->{'postNode'} = undef;
     }
     else
     {
@@ -152,6 +157,7 @@ sub parse
     my @loaded  = ();
     my @states  = ();
     my @figures = ();
+    my @bibs    = ();
     my $warnFlag    = 0;
     my $errorFlag   = 0;
     
@@ -176,13 +182,13 @@ sub parse
         # to our dependency list
         if(/Texmake Bibliographies: (.+)/)
         {
-            print_n 0, <<"HERE"
-            
-            
-        Bibliographies: $1        
-            
-            
-HERE
+            @bibs = split /,/, $1;
+            print_n 0, "Bibliographies:";
+            for my $bib(@bibs)
+            {
+                print_n 0, "   " . $bib;
+            }
+            print_n 0, "\n\n";
         }
         
         

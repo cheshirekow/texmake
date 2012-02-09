@@ -80,10 +80,15 @@ sub createTree
     my $postNode;
     my $rootfileNode= ($pkg.'TexRootMaker::Node')->new($params);
     
+    my $options     = $target->{'options'};
     if($ext eq "html")
-        {$postNode  =  ($pkg.'Latexml::Html::Node')->new($output,$srcdir);}
+        {$postNode  =  ($pkg.'Latexml::Html::Node')->new($output,$srcdir,$options);}
     else
-        {$postNode  =  ($pkg.'Latexml::Xhtml::Node')->new($output,$srcdir);}
+        {$postNode  =  ($pkg.'Latexml::Xhtml::Node')->new($output,$srcdir,$options);}
+    
+    # tell the xml node who his post node is so he can tell it about
+    # bibliography files
+    $xmlNode->{'postNode'} = $postNode;
     
 
 
