@@ -13,7 +13,20 @@
 # +subdir2
 #
 
-addTarget( 'texmake.pdf', 'texmake.tex' );
-addTarget( 'texmake.xhtml', 'texmake.tex' );
+addTarget( 'texmake.pdf', 'texmake_pdf.tex' );
+
+addTarget( 
+    {
+        'outfile'   =>'texmake.xhtml', 
+        'srcfile'   =>'texmake_html.tex', 
+        'options'   =>'--splitat=chapter --css=amsart'
+    } );
+    
+addTarget( 
+    {
+        'outfile'   =>'texmake_monolithic.xhtml', 
+        'srcfile'   =>'texmake_html.tex', 
+        'options'   =>'--css=amsart'
+    } );
 
 addSubdirectory('a');

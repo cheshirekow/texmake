@@ -1,15 +1,5 @@
-\documentclass[10pt,oneside]{report}
-
-\setlength{\marginparwidth}{1in}
-
-\usepackage{cite}
-\usepackage{graphicx}
-
-\title{Texmake Test}
+\title{Texmake Manual}
 \author{Josh Bialkowski \\ \small jbialk@mit.edu}
-
-\usepackage{fullpage}
-\usepackage{float}
     
 \pagestyle{plain}
 
@@ -18,10 +8,8 @@
 \begin{document}
 
 \maketitle
-\include{chapters/ch1}
-\include{chapters/ch2}
-\include{chapters/ch3}
-\include{chapters/ch4}
+\input{chapters/ch1}
+\input{chapters/ch2}
 
 \bibliographystyle{plain}
 \bibliography{bib/references,bib/references2}

@@ -1,18 +1,32 @@
-\chapter{Chapter B}
-Praesent dapibus porta tempor. Sed sed massa nunc. Phasellus pulvinar augue ut dui mollis at congue dui facilisis. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent justo lorem, eleifend feugiat consectetur et, porta ut augue. Morbi rhoncus viverra mattis. Sed bibendum molestie feugiat. Aliquam quam dolor, malesuada in venenatis in, vehicula non urna.
-\cite{book_c}
+\chapter{Installation}
 
-\begin{figure}[h]
-\begin{center}
-    \includegraphics[scale=1]{fig/a}
-    \caption{Graphic A}
-\end{center}
-\end{figure}
+\section{Dependencies}
+Right now texmake requires some of my other codes for converting image files: svg2pdf and svg2eps ( see \url{http://www.cheshirekow.com/redmine/projects/svg2x} ).
+%
+In the future, these dependencies should be optional.
+%
+It also requires (pdf)latex, latexml(post), bibtex and (obviously) perl.
 
-\section{Section B}
-Pellentesque dapibus purus vitae nulla malesuada vestibulum consectetur enim ullamcorper. Cras eu magna orci, sed laoreet ipsum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce leo mi, posuere sit amet lacinia sed, sollicitudin eget tellus. Vestibulum et fermentum neque. Maecenas ligula dolor, aliquet a sollicitudin at, bibendum sed velit. Proin sagittis egestas magna id fermentum. Fusce at erat in eros bibendum blandit tempus ut arcu. Aliquam non dapibus leo.
+\section{Installation}
 
-Ut in diam at orci aliquet pharetra eu non eros. Duis lobortis rhoncus viverra. Ut neque mauris, ullamcorper nec consequat ac, accumsan sed est. Phasellus arcu felis, laoreet ac malesuada quis, imperdiet in massa. Fusce a libero ac nisl sagittis imperdiet. Vivamus faucibus hendrerit suscipit. Nam vitae vestibulum purus. Suspendisse sit amet elit tristique leo fringilla porta nec vel neque. Cras porta molestie lacinia.
+Install the way you would any other perl module. Add \verb|PREFIX=/usr/local| or similar when you run \verb|Makefile.PL| if you dont want to install in the default location for your system.
 
-Integer eu feugiat urna. Suspendisse at eros augue. Maecenas eu velit neque, ut placerat lorem. Vivamus adipiscing nulla eget massa accumsan venenatis. Vivamus diam metus, placerat ut imperdiet quis, posuere vitae justo. Donec sodales eros sit amet dolor consectetur posuere. Donec in felis id ligula sagittis molestie. Praesent scelerisque, velit ut laoreet sollicitudin, dui tellus aliquet purus, at tristique eros purus non diam. Fusce massa neque, luctus at commodo ac, lacinia in nibh. Mauris non neque sem. Curabitur ut arcu leo. Morbi aliquet pellentesque placerat. Nunc felis quam, venenatis eu malesuada et, dictum sed ante.
-\cite{book_d}
+\begin{lstlisting}
+git clone http://www.cheshirekow.com/git/texmake.git
+cd texmake/Texmake
+perl Makefile.PL
+make
+make install
+\end{lstlisting}
+
+Then test with 
+
+\begin{lstlisting}
+cd ..
+mkdir build
+cd build
+texmake init ../src
+make
+\end{lstlisting}
+
+
