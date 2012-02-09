@@ -23,6 +23,7 @@ use Texmake::Tools::Copy::Node;
 use Texmake::Tools::Bibtex::Node;
 use Texmake::Tools::TexRootMaker::Node; 
 use Texmake::Tools::TexState::Node;
+use Texmake::Tools::Latexml::Bib::Node;
 
 our @ISA = ('Texmake::Node');
 
@@ -186,7 +187,33 @@ sub parse
             print_n 0, "Bibliographies:";
             for my $bib(@bibs)
             {
+                my $srcbib = $srcdir . "/" . $bib . ".bib";
+                my $outbib = $outdir . "/" . $bib . ".xml";
                 print_n 0, "   " . $bib;
+                print_n 0, "      " . $srcbib;
+                print_n 0, "      " . $outbib;
+                
+                my $bibFound = 0;
+                my $postDepends = $node->{'postNode'}->{'depends'};
+                for my $postDepend (@$postDepends)
+                {
+                    if( $postDepend->{'outfile'} eq $outbib )
+                    {
+                        print_n 0, "      already in post's dependency list";
+                        $bibFound = 1;
+                        last;
+                    }
+                }
+                
+                unless($bibFound)
+                {
+                    my $pkg         = "Texmake::Tools::";
+                    my $bibNode     = ($pkg.'Latexml::Bib::Node')->new($outbib,$srcbib);
+                    my $srcNode     = ($pkg.'Source::Node')->new($srcbib);
+                    $bibNode->dependsOn($srcNode);
+                    push(@$postDepends,$bibNode);
+                    print_n 0, "      added to post nodes dependency list";
+                }
             }
             print_n 0, "\n\n";
         }

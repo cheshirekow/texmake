@@ -23,6 +23,7 @@ use Texmake::Tools::TexRootMaker;
 use Texmake::Tools::Latexml::Html::Node;
 use Texmake::Tools::Latexml::Xhtml::Node;
 use Texmake::Tools::Latexml::Xml::Node;
+use Texmake::Tools::Latexml::Bib::Node;
 
 sub getSourceTypes
 {
@@ -62,7 +63,8 @@ sub createTree
         'srcdir' => $target->{'srcdir'},
         'inputs' => $target->{'inputs'},
         'header' => $target->{'header'},
-        'footer' => $target->{'fooder'}
+        'footer' => $target->{'fooder'},
+        'latexml'=> 1
         };
     
     # if the user passed us a string, then we assume it is the file name of the

@@ -67,9 +67,9 @@ sub new
         $this->{'srcdir'}   = $srcdir;
         $this->{'options'}  = $options;
         
-        # the bibliography node get's a special pointer so that the parser
-        # can mark the bibliography dirty if the output shows missing citations
-        $this->{'bibNode'}      = undef;
+        # the bibliography nodes get a special pointer so that the xml parser
+        # can modify it if necessary
+        $this->{'bibNodes'} = undef;
     }
     else
     {
@@ -127,10 +127,25 @@ sub build
         die;
     }
     
+    my $bibOptions = "";
+    # generate a list of bibliography files
+    print_n 0, " Scanning dependency list";
+    my $dependList = $this->{'depends'};
+    for my $depend( @$dependList )
+    {
+        print_n 0, "   " . $depend->{'srcfile'};
+        if( $depend->{'srcfile'} =~ /\.bib/ )
+        {
+            print_n 0, "Bibliography: " . $depend->{'outfile'} . "\n";
+            $bibOptions .= "--bibliography=" . $depend->{'outfile'} . " ";
+        }
+    }
+    
     # generate the command to execute
     my $cmd = "latexmlpost --destination=index.xhtml ".
                             "--verbose --verbose ".
                             "--novalidate ".
+                            $bibOptions . " " . 
                             $options . " " . 
                             "$builddir/root.xml 2>&1";   
     my $fh;

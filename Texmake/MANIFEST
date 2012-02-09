@@ -17,6 +17,7 @@ lib/Texmake/Tools/Svg2eps.pm
 lib/Texmake/Tools/Imagemagick.pm
 lib/Texmake/Tools/Svg2pdf.pm
 lib/Texmake/Tools/Copy.pm
+lib/Texmake/Tools/Latexml/Bib/Node.pm
 lib/Texmake/Tools/Latexml/Html/Node.pm
 lib/Texmake/Tools/Latexml/Xhtml/Node.pm
 lib/Texmake/Tools/Latexml/Xml/Node.pm

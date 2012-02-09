@@ -30,6 +30,7 @@ sub new
     $this->{'inputs'} = $params->{'inputs'};
     $this->{'header'} = $params->{'header'};
     $this->{'footer'} = $params->{'footer'};
+    $this->{'latexml'}= $params->{'latexml'};
     
     bless($this);
     return $this;
@@ -46,6 +47,7 @@ sub build
     my $this        = shift;
     my $outfile     = $this->{'outfile'};
     my $files       = $this->{'inputs'};
+    my $latexml     = $this->{'latexml'};
     
     print_n "In TexRootMaker node's build method";
    
@@ -74,13 +76,25 @@ sub build
     foreach my $file (@$files)
     {
         $file = $this->{'srcdir'} . '/' . $file;
-        print $fh <<'HERE';
+        if($latexml)
+        {
+            print $fh <<'HERE';
+%\let\texmakebibliography\bibliography
+\newcommand{\texmakebibliography}[1]{ %
+    \typeout{Texmake Bibliographies: #1} %
+}   
+HERE
+        }
+        else
+        {
+            print $fh <<'HERE';
 \let\texmakebibliography\bibliography
 \renewcommand{\bibliography}[1]{ %
     \typeout{Texmake Bibliographies: #1} %
     \texmakebibliography{#1}     %
 }    
 HERE
+        }
         print $fh "\\input{$file}\n";
     }
     

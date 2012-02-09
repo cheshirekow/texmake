@@ -29,4 +29,3 @@ addTarget(
         'options'   =>'--css=amsart'
     } );
 
-addSubdirectory('a');
