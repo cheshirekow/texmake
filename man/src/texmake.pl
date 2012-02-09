@@ -19,6 +19,8 @@ addTarget(
     {
         'outfile'   =>'texmake.xhtml', 
         'srcfile'   =>'texmake_html.tex', 
+        'bibfiles'  =>['bib/references.bib',
+                        'bib/references2.bib'],
         'options'   =>'--splitat=chapter --css=amsart'
     } );
     
@@ -26,6 +28,8 @@ addTarget(
     {
         'outfile'   =>'texmake_monolithic.xhtml', 
         'srcfile'   =>'texmake_html.tex', 
+        'bibfiles'  =>['bib/references.bib',
+                        'bib/references2.bib'],
         'options'   =>'--css=amsart'
     } );
 

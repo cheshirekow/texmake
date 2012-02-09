@@ -349,12 +349,26 @@ sub parse
             $depends{$node->{'outfile'}}->{'state'} = DEP_KEEP;
             $depends{$node->{'outfile'}}->{'node'}  = $node;
         }
+        
+        # if it's in the dependency list but wasn't loaded then we can throw it
+        # away (i.e. drop it)
         else
         {
-            $depends{$node->{'outfile'}} = {
-                'state' => DEP_DROP,
-                'node'  => $node
-            };
+            # well, unless it's a bib file, we always need to keep those
+            if( $node->{'srcfile'} =~ /\.bib/ )
+            {
+                $depends{$node->{'outfile'}} = {
+                    'state' => DEP_KEEP,
+                    'node'  => $node
+                };
+            }
+            else
+            {
+                $depends{$node->{'outfile'}} = {
+                    'state' => DEP_DROP,
+                    'node'  => $node
+                };
+            }
         }
     }
     

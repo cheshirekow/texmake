@@ -92,6 +92,20 @@ sub createTree
     # bibliography files
     $xmlNode->{'postNode'} = $postNode;
     
+    # handle the bibfiles from the makefile
+    my $bibfiles = $target->{'bibfiles'};
+    for my $bibfile (@$bibfiles)
+    {
+        my $outbib      = "$outdir/$bibfile";
+        my $srcbib      = "$srcdir/$bibfile";
+        $outbib =~ s/\.bib$/\.xml/;
+        
+        my $pkg         = "Texmake::Tools::";
+        my $bibNode     = ($pkg.'Latexml::Bib::Node')->new($outbib,$srcbib);
+        my $srcNode     = ($pkg.'Source::Node')->new($srcbib);
+        $bibNode->dependsOn($srcNode);
+        $postNode->dependsOn($bibNode);
+    }
 
 
     # note:
