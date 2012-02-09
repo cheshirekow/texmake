@@ -1,1 +1,0 @@
-print_n 0, "In subdirectory b";
